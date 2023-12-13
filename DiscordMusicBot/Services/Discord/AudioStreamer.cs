@@ -105,6 +105,7 @@ namespace DiscordMusicBot.AudioRequesting
                     }
                 }
             }
+            _playTask = null;
         }
 
         private Process? CreateStream(string path)
