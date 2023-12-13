@@ -26,10 +26,10 @@ namespace DiscordMusicBot.AudioRequesting
 
         public event AsyncEventHandler<Video>? Finished;
 
-        public AudioStreamer(DiscordBot bot, IAudioDownloader downloader)
+        public AudioStreamer(DiscordBot bot, ulong guildId)
         {
             _client = bot.Client;
-            _guildId = ...;
+            _guildId = guildId;
         }
 
         public async Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds)

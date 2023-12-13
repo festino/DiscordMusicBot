@@ -17,17 +17,16 @@ public class Program
 		Config config = new Config("config.yml", "credentials.yml");
 		DiscordBot bot = new DiscordBot(config);
 		IAudioDownloader downloader = new YoutubeAudioDownloader();
-		AudioStreamer streamer = new AudioStreamer(bot, downloader);
-		RequestQueue queue = new RequestQueue(downloader, streamer);
 		YoutubeDataProvider youtubeDataProvider = new YoutubeDataProvider(config);
-		var executors = new Dictionary<string, ICommandExecutor>() {
-			{ "play", new PlayCommandExecutor(queue, youtubeDataProvider) },
-			{ "list", new ListCommandExecutor(queue) },
-			{ "stop", new StopCommandExecutor(queue) },
-			{ "skip", new SkipCommandExecutor(queue) },
-			{ "now", new NowCommandExecutor(queue) }
+		var executors = new Dictionary<string, Func<RequestQueue, ICommandExecutor>>() {
+			{ "play", (queue) => new PlayCommandExecutor(queue, youtubeDataProvider) },
+			{ "list", (queue) => new ListCommandExecutor(queue) },
+			{ "stop", (queue) => new StopCommandExecutor(queue) },
+			{ "skip", (queue) => new SkipCommandExecutor(queue) },
+			{ "now", (queue) => new NowCommandExecutor(queue) }
 		};
-		bot.CommandRecieved += new CommandWorker(executors).OnCommand;
+		CommandWorker worker = new(executors, downloader, (guildId) => new AudioStreamer(bot, guildId));
+		bot.CommandRecieved += worker.OnCommand;
 		await bot.RunAsync();
 	}
 }

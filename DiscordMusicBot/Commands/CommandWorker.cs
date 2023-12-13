@@ -1,5 +1,7 @@
-﻿using DiscordMusicBot.Commands;
+﻿using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Commands;
 using DiscordMusicBot.Services.Discord;
+using DiscordMusicBot.Services.Youtube;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,22 +13,43 @@ namespace DiscordMusicBot
     public class CommandWorker : ICommandWorker
     {
         private readonly bool REPLY_UNKNOWN_COMMAND = false;
-        private readonly Dictionary<string, ICommandExecutor> executors;
+        private readonly Dictionary<string, Func<RequestQueue, ICommandExecutor>> executorConstructors = new();
+        private readonly Dictionary<ulong, Dictionary<string, ICommandExecutor>> executors = new();
 
-        public CommandWorker(Dictionary<string, ICommandExecutor> executors)
+        private readonly IAudioDownloader _downloader;
+        private readonly Func<ulong, IAudioStreamer> _streamerConstructor;
+
+        public CommandWorker(
+            Dictionary<string, Func<RequestQueue, ICommandExecutor>> executorConstructors,
+            IAudioDownloader downloader,
+            Func<ulong, IAudioStreamer> streamerConstructor)
         {
-            this.executors = new();
-            foreach (var executor in executors)
-            {
-                this.executors.Add(executor.Key.ToLower(), executor.Value);
-            }
+            _downloader = downloader;
+            _streamerConstructor = streamerConstructor;
+            foreach (var executor in executorConstructors)
+                this.executorConstructors.Add(executor.Key.ToLower(), executor.Value);
         }
 
         public async Task<CommandResponse> OnCommand(string command, string args, DiscordMessageInfo discordMessageInfo)
         {
+            Dictionary<string, ICommandExecutor> guildExecutors;
+            if (!executors.ContainsKey(discordMessageInfo.GuildId))
+            {
+                RequestQueue guildQueue = new(_downloader, _streamerConstructor(discordMessageInfo.GuildId));
+                guildExecutors = new();
+                foreach (var executorConstructor in executorConstructors)
+                    guildExecutors.Add(executorConstructor.Key, executorConstructor.Value(guildQueue));
+
+                executors.Add(discordMessageInfo.GuildId, guildExecutors);
+            }
+            else
+            {
+                guildExecutors = executors[discordMessageInfo.GuildId];
+            }
+
             command = command.ToLower();
-            if (executors.ContainsKey(command))
-                return await executors[command].Execute(args, discordMessageInfo);
+            if (guildExecutors.ContainsKey(command))
+                return await guildExecutors[command].Execute(args, discordMessageInfo);
 
             if (REPLY_UNKNOWN_COMMAND)
                 return new CommandResponse(CommandResponseStatus.ERROR, "unknown command");
