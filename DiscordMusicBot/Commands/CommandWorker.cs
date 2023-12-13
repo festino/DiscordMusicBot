@@ -33,18 +33,18 @@ namespace DiscordMusicBot
         public async Task<CommandResponse> OnCommand(string command, string args, DiscordMessageInfo discordMessageInfo)
         {
             Dictionary<string, ICommandExecutor> guildExecutors;
-            if (!executors.ContainsKey(discordMessageInfo.GuildId))
+            if (executors.ContainsKey(discordMessageInfo.GuildId))
             {
-                RequestQueue guildQueue = new(_downloader, _streamerConstructor(discordMessageInfo.GuildId));
+                guildExecutors = executors[discordMessageInfo.GuildId];
+            }
+            else
+            {
                 guildExecutors = new();
+                RequestQueue guildQueue = new(_downloader, _streamerConstructor(discordMessageInfo.GuildId));
                 foreach (var executorConstructor in executorConstructors)
                     guildExecutors.Add(executorConstructor.Key, executorConstructor.Value(guildQueue));
 
                 executors.Add(discordMessageInfo.GuildId, guildExecutors);
-            }
-            else
-            {
-                guildExecutors = executors[discordMessageInfo.GuildId];
             }
 
             command = command.ToLower();
