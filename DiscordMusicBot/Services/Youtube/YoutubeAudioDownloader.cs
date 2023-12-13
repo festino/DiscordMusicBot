@@ -56,29 +56,8 @@ public class YoutubeAudioDownloader : IAudioDownloader
         return (process is null || !File.Exists(path)) ? null : path;
     }
 
-    private async Task<Stream?> DownloadToMeamoryAsync(string youtubeId)
-    {
-        Process? process = Process.Start(new ProcessStartInfo
-        {
-            FileName = "yt-dlp",
-            Arguments = $"--extract-audio --audio-format mp3 -q -v -o - https://www.youtube.com/watch?v={youtubeId}",
-            UseShellExecute = false,
-            RedirectStandardOutput = true
-        });
-
-        MemoryStream memoryStream = new MemoryStream(4096 * 1024);
-        if (process is not null)
-        {
-            await process.StandardOutput.BaseStream.CopyToAsync(memoryStream);
-            await process.WaitForExitAsync();
-        }
-
-        return memoryStream;
-    }
-
     private async Task DownloadAsync(string youtubeId)
     {
-        // Stream? stream = await DownloadToMeamoryAsync(youtubeId);
         string? path = await DownloadMp3Async(youtubeId);
         bool notify = false;
         lock (_downloadingIds)

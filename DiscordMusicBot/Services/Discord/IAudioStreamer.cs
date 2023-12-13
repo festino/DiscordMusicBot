@@ -9,7 +9,6 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public interface IAudioStreamer
     {
-        //delegate void OnFinished(Video video);
         event AsyncEventHandler<Video>? Finished;
 
         Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds);

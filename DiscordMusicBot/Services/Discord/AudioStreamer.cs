@@ -85,7 +85,6 @@ namespace DiscordMusicBot.AudioRequesting
             }
 
             // TODO start task, that will check if in voice channel etc?, try join
-            //using (var ffmpeg = CreateStream())
             using (var ffmpeg = CreateStream(path))
             {
                 if (ffmpeg is null)
@@ -97,21 +96,14 @@ namespace DiscordMusicBot.AudioRequesting
                     _state = PlaybackState.PLAYING;
                     try
                     {
-                        /*Task[] tasks = new Task[]
-                        {
-                            path.CopyToAsync(ffmpeg.StandardInput.BaseStream),
-                            output.CopyToAsync(discord)
-                        };
-                        await Task.WhenAll(tasks);*/
                         await output.CopyToAsync(discord, cancellationToken);
                     }
                     finally
                     {
-                        //await ffmpeg.WaitForExitAsync(cancellationToken);
                         await discord.FlushAsync(cancellationToken);
+                        await ffmpeg.WaitForExitAsync(cancellationToken);
                     }
                 }
-                await _audioClient.StopAsync();
             }
         }
 
@@ -124,18 +116,6 @@ namespace DiscordMusicBot.AudioRequesting
                 FileName = "ffmpeg",
                 Arguments = $"-hide_banner -loglevel panic -f mp3 -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
                 UseShellExecute = false,
-                RedirectStandardOutput = true
-            });
-        }
-
-        private Process? CreateStream()
-        {
-            return Process.Start(new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $"-hide_banner -loglevel panic -f mp3 -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardInput = true,
                 RedirectStandardOutput = true
             });
         }

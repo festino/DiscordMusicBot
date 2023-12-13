@@ -4,8 +4,6 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public interface IAudioDownloader
     {
-        //delegate void OnLoadCompleted(string youtubeId, string path);
-        //delegate void OnLoadFailed(string youtubeId);
         record LoadCompletedArgs(string YoutubeId, string Path);
         record LoadFailedArgs(string YoutubeId);
 
