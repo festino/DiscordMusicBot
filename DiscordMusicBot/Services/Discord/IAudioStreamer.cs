@@ -12,9 +12,8 @@ namespace DiscordMusicBot.AudioRequesting
         //delegate void OnFinished(Video video);
         event AsyncEventHandler<Video>? Finished;
 
-        Task<bool> JoinAsync(ulong[] requesterIds);
+        Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds);
 
-        Task StartAsync(Video video, string path);
         Task PauseAsync();
         Task ResumeAsync();
         Task StopAsync();

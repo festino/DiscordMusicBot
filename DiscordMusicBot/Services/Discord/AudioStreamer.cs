@@ -14,6 +14,8 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public class AudioStreamer : IAudioStreamer
     {
+        private const int RETRY_DELAY_MS = 500;
+
         private readonly DiscordSocketClient _client;
         private readonly ulong _guildId;
         private IAudioClient? _audioClient = null;
@@ -30,27 +32,11 @@ namespace DiscordMusicBot.AudioRequesting
             _guildId = ...;
         }
 
-        public async Task<bool> JoinAsync(ulong[] requesterIds)
+        public async Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds)
         {
-            if (_audioClient is not null)
-                return true;
-
-            var channelInfo = FindChannel(requesterIds);
-            if (channelInfo is null)
-                return false;
-
-            (IVoiceChannel voiceChannel, IGuildUser voiceUser) = channelInfo;
-            _audioClient = await voiceChannel.ConnectAsync(true, false);
-            if (_audioClient is null)
-                return false;
-
-            Console.WriteLine($"Joined [{voiceChannel.Name}] for [{voiceUser}]");
-            return true;
-        }
-
-        public async Task StartAsync(Video video, string path)
-        {
-            _playTask = StartNewAsync(video, path, _cancellationTokenSource.Token);
+            CancellationToken cancellationToken = _cancellationTokenSource.Token;
+            await JoinAsync(getRequesterIds, cancellationToken);
+            _playTask = StartNewAsync(video, path, cancellationToken);
         }
 
         public async Task PauseAsync()
@@ -171,6 +157,36 @@ namespace DiscordMusicBot.AudioRequesting
             }
 
             return null;
+        }
+
+        private async Task JoinAsync(Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
+        {
+            if (_audioClient is not null)
+                return;
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                _audioClient = await TryJoinAsync(getRequesterIds);
+                if (_audioClient is not null)
+                    return;
+
+                await Task.Delay(RETRY_DELAY_MS, CancellationToken.None);
+            }
+        }
+
+        private async Task<IAudioClient?> TryJoinAsync(Func<ulong[]> getRequesterIds)
+        {
+            var channelInfo = FindChannel(getRequesterIds());
+            if (channelInfo is null)
+                return null;
+
+            (IVoiceChannel voiceChannel, IGuildUser voiceUser) = channelInfo;
+            _audioClient = await voiceChannel.ConnectAsync(true, false);
+            if (_audioClient is null)
+                return null;
+
+            Console.WriteLine($"Joined [{voiceChannel.Name}] for [{voiceUser}]");
+            return _audioClient;
         }
     }
 }

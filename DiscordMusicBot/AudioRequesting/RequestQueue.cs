@@ -17,8 +17,6 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly List<Video> _history = new();
         private List<Video> _videos = new();
 
-        SemaphoreSlim mutex = new SemaphoreSlim(1);
-
         public RequestQueue(IAudioDownloader audioDownloader, IAudioStreamer audioStreamer)
         {
             _audioDownloader = audioDownloader;
@@ -33,7 +31,9 @@ namespace DiscordMusicBot.AudioRequesting
             if (_videos.Count == 0)
                 return _history.ToArray();
 
-            return _history.Where((video) => video != _videos[0]).ToArray();
+            return _history
+                .Where((video) => video != _videos[0])
+                .ToArray();
         }
 
         public List<Video> GetVideos()
@@ -115,9 +115,15 @@ namespace DiscordMusicBot.AudioRequesting
             Video video = _videos[0];
             AddToHistory(video);
             Console.WriteLine("Joining");
-            await _audioStreamer.JoinAsync(new ulong[] { video.MessageInfo.RequesterId });
-            Console.WriteLine("Playing");
-            await _audioStreamer.StartAsync(video, args.Path);
+            await _audioStreamer.JoinAndPlayAsync(video, args.Path, GetRequesterIds);
+        }
+
+        private ulong[] GetRequesterIds()
+        {
+            return _videos
+                .Select((video) => video.MessageInfo.RequesterId)
+                .Distinct()
+                .ToArray();
         }
 
         private void AddToHistory(Video video)
