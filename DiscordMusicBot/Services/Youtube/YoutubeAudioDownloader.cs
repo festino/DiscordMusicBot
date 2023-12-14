@@ -37,6 +37,9 @@ public class YoutubeAudioDownloader : IAudioDownloader
 
     private async Task<string?> DownloadMp3Async(string youtubeId)
     {
+        if (!IsValidYoutubeId(youtubeId))
+            return null;
+
         string path = Path.GetFullPath($"./downloads/{youtubeId}.mp3");
         if (File.Exists(path))
             return path;
@@ -81,5 +84,15 @@ public class YoutubeAudioDownloader : IAudioDownloader
 
         if (task is not null)
             await task;
+    }
+
+    private bool IsValidYoutubeId(string youtubeId)
+    {
+        return youtubeId.Length == 11 && youtubeId.All(c => IsValidYoutubeIdChar(c));
+    }
+
+    private bool IsValidYoutubeIdChar(char c)
+    {
+        return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || '0' <= c && c <= '9' || c == '-' || c == '_';
     }
 }
