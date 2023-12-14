@@ -47,8 +47,8 @@ namespace DiscordMusicBot.Services.Youtube
 
         public async Task<YoutubeIdsResult?> GetYoutubeIds(string arg)
         {
-            string? videoId = GetQueryParam(arg, "v");
-            string? listId = GetQueryParam(arg, "list");
+            string? videoId = TryParseVideoId(arg);
+            string? listId = TryParsePlaylistId(arg);
             if (videoId is null)
             {
                 if (listId is null)
@@ -141,6 +141,27 @@ namespace DiscordMusicBot.Services.Youtube
                 video.Snippet.Title,
                 new TimeSpan(-1)
             );
+        }
+
+        private string? TryParseVideoId(string arg)
+        {
+            string? videoId = GetQueryParam(arg, "v");
+            if (videoId is not null)
+                return videoId;
+
+            int startIndex = arg.LastIndexOf('/');
+            if (startIndex < 0)
+                return null;
+
+            startIndex++;
+            int endIndex = arg.IndexOf('?', startIndex);
+            endIndex = endIndex < 0 ? arg.Length : endIndex;
+            return arg[startIndex..endIndex];
+        }
+
+        private string? TryParsePlaylistId(string arg)
+        {
+            return GetQueryParam(arg, "list");
         }
 
         private string? GetQueryParam(string arg, string param)
