@@ -22,7 +22,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         private CancellationTokenSource _cancellationTokenSource = new();
         private PlaybackState _state = PlaybackState.NO_STREAM;
-        private Task? _playTask = null;
+        private Task _playTask = Task.CompletedTask;
         private Video? _currentVideo = null;
         private DateTime _startTime = DateTime.Now;
 
@@ -49,7 +49,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             CancellationToken cancellationToken = _cancellationTokenSource.Token;
             await JoinAsync(getRequesterIds, cancellationToken);
-            _playTask = StartNewAsync(video, path, cancellationToken);
+            await StartNewAsync(video, path, cancellationToken);
         }
 
         public async Task PauseAsync()
@@ -64,7 +64,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         public async Task StopAsync()
         {
-            if (_playTask is null)
+            if (_playTask.IsCompleted)
                 return;
 
             _cancellationTokenSource.Cancel();
@@ -76,13 +76,13 @@ namespace DiscordMusicBot.AudioRequesting
         private async Task StartNewAsync(Video video, string path, CancellationToken cancellationToken)
         {
             Console.WriteLine("Starting");
-
             _currentVideo = video;
-            await PlayAudio(path, cancellationToken);
+            _playTask = PlayAudio(path, cancellationToken);
+            await _playTask;
 
+            Console.WriteLine("Finished");
             _currentVideo = null;
             _state = PlaybackState.NO_STREAM;
-            Console.WriteLine("Finished");
             if (cancellationToken.IsCancellationRequested)
                 return;
 
@@ -121,7 +121,6 @@ namespace DiscordMusicBot.AudioRequesting
                     }
                 }
             }
-            _playTask = null;
         }
 
         private Process? CreateStream(string path)
