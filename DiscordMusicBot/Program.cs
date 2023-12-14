@@ -24,7 +24,8 @@ public class Program
 			{ "stop", (queue) => new StopCommandExecutor(queue) },
 			{ "skip", (queue) => new SkipCommandExecutor(queue) },
 			{ "undo", (queue) => new UndoCommandExecutor(queue) },
-			{ "now", (queue) => new NowCommandExecutor(queue) }
+			{ "now", (queue) => new NowCommandExecutor(queue) },
+			{ "help", (queue) => new HelpCommandExecutor() },
 		};
 		CommandWorker worker = new(executors, downloader, (guildId) => new AudioStreamer(bot, guildId));
 		bot.CommandRecieved += worker.OnCommand;
