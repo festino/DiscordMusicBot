@@ -12,7 +12,7 @@ namespace DiscordMusicBot.Services.Discord
 {
     public class DiscordBot
     {
-        private readonly string COMMAND_PREFIX = "!";
+        private readonly string _commandPrefix;
         private readonly DiscordSocketClient _client;
         private readonly string _token;
 
@@ -29,6 +29,7 @@ namespace DiscordMusicBot.Services.Discord
             _client.Log += Log;
             _client.MessageReceived += HandleCommandAsync;
             _token = config.DiscordToken;
+            _commandPrefix = config.CommandPrefix;
         }
 
         public async Task RunAsync()
@@ -55,12 +56,12 @@ namespace DiscordMusicBot.Services.Discord
                 return;
 
             string text = message.Content;
-            if (message.Author.IsBot || !text.StartsWith(COMMAND_PREFIX))
+            if (message.Author.IsBot || !text.StartsWith(_commandPrefix))
                 return;
 
-            int index = text.IndexOf(' ', COMMAND_PREFIX.Length);
+            int index = text.IndexOf(' ', _commandPrefix.Length);
             index = index < 0 ? text.Length : index;
-            string command = text[COMMAND_PREFIX.Length..index];
+            string command = text[_commandPrefix.Length..index];
             string commandMessage = text[index..];
             ulong? guildId = (message.Channel as SocketGuildChannel)?.Guild.Id;
             if (guildId is null)
