@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
+using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting
 {
@@ -80,6 +81,7 @@ namespace DiscordMusicBot.AudioRequesting
 
             var videos = _videos;
             _videos = new List<Video>();
+            Console.WriteLine("!!! clear");
 
             return videos;
         }
@@ -140,9 +142,17 @@ namespace DiscordMusicBot.AudioRequesting
             await RemoveAtAsync(0);
         }
 
-        private async Task OnAudioFinishedAsync(object sender, Video video)
+        private async Task OnAudioFinishedAsync(object sender, PlaybackEndedArgs args)
         {
-            if (_videos.Count == 0 || !_videos[0].Equals(video))
+            if (args.Status == PlaybackEndedStatus.STOPPED) return;
+
+            if (args.Status == PlaybackEndedStatus.DISCONNECTED)
+            {
+                await ClearAsync();
+                return;
+            }
+
+            if (_videos.Count == 0 || !_videos[0].Equals(args.Video))
                 return;
 
             await RemoveAtAsync(0);

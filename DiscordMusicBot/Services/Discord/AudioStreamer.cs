@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting
 {
@@ -26,7 +27,7 @@ namespace DiscordMusicBot.AudioRequesting
         private Video? _currentVideo = null;
         private DateTime _startTime = DateTime.Now;
 
-        public event AsyncEventHandler<Video>? Finished;
+        public event AsyncEventHandler<PlaybackEndedArgs>? Finished;
 
         public AudioStreamer(DiscordBot bot, ulong guildId)
         {
@@ -79,14 +80,14 @@ namespace DiscordMusicBot.AudioRequesting
             _currentVideo = video;
             _playTask = PlayAudio(path, cancellationToken);
             await _playTask;
-
             Console.WriteLine("Finished");
-            _currentVideo = null;
-            _state = PlaybackState.NO_STREAM;
-            if (cancellationToken.IsCancellationRequested)
-                return;
 
-            Task? task = Finished?.InvokeAsync(this, video);
+            PlaybackEndedStatus status = PlaybackEndedStatus.OK;
+            if (cancellationToken.IsCancellationRequested)
+                status = PlaybackEndedStatus.STOPPED;
+            if (_audioClient is null)
+                status = PlaybackEndedStatus.DISCONNECTED;
+            Task? task = Finished?.InvokeAsync(this, new PlaybackEndedArgs(status, video));
             if (task is not null)
                 await task;
         }
@@ -99,14 +100,31 @@ namespace DiscordMusicBot.AudioRequesting
                 return;
             }
 
-            // TODO start task, that will check if in voice channel etc?, try join
+            try
+            {
+                await PlayAsync(_audioClient, path, cancellationToken);
+            }
+            catch (Exception)
+            {
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    Console.WriteLine("Audio client was disconnected!");
+                    _audioClient = null;
+                }
+            }
+            _currentVideo = null;
+            _state = PlaybackState.NO_STREAM;
+        }
+
+        private async Task PlayAsync(IAudioClient audioClient, string path, CancellationToken cancellationToken)
+        {
             using (var ffmpeg = CreateStream(path))
             {
                 if (ffmpeg is null)
                     return;
 
                 using (var output = ffmpeg.StandardOutput.BaseStream)
-                using (var discord = _audioClient.CreatePCMStream(AudioApplication.Mixed))
+                using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
                     _state = PlaybackState.PLAYING;
                     _startTime = DateTime.Now;
@@ -116,8 +134,9 @@ namespace DiscordMusicBot.AudioRequesting
                     }
                     finally
                     {
-                        await discord.FlushAsync(cancellationToken);
+                        ffmpeg.Close();
                         await ffmpeg.WaitForExitAsync(cancellationToken);
+                        await discord.FlushAsync(cancellationToken);
                     }
                 }
             }
@@ -157,7 +176,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task JoinAsync(Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
         {
-            if (_audioClient is not null)
+            if (_audioClient is not null && _audioClient.ConnectionState == ConnectionState.Connected)
                 return;
 
             _state = PlaybackState.TRYING_TO_JOIN;
