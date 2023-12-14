@@ -1,4 +1,5 @@
 ﻿using AsyncEvent;
+using DiscordMusicBot.Services.Discord;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +17,7 @@ namespace DiscordMusicBot.AudioRequesting
         Task PauseAsync();
         Task ResumeAsync();
         Task StopAsync();
+
+        AudioInfo? GetCurrentTime();
     }
 }

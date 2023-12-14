@@ -20,9 +20,11 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly ulong _guildId;
         private IAudioClient? _audioClient = null;
 
+        private CancellationTokenSource _cancellationTokenSource = new();
         private PlaybackState _state = PlaybackState.NO_STREAM;
         private Task? _playTask = null;
-        private CancellationTokenSource _cancellationTokenSource = new();
+        private Video? _currentVideo = null;
+        private DateTime _startTime = DateTime.Now;
 
         public event AsyncEventHandler<Video>? Finished;
 
@@ -30,6 +32,17 @@ namespace DiscordMusicBot.AudioRequesting
         {
             _client = bot.Client;
             _guildId = guildId;
+        }
+
+        public AudioInfo? GetCurrentTime()
+        {
+            if (_state == PlaybackState.NO_STREAM)
+                return null;
+
+            if (_currentVideo is null)
+                return null;
+
+            return new AudioInfo(_currentVideo, DateTime.Now - _startTime);
         }
 
         public async Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds)
@@ -64,8 +77,10 @@ namespace DiscordMusicBot.AudioRequesting
         {
             Console.WriteLine("Starting");
 
+            _currentVideo = video;
             await PlayAudio(path, cancellationToken);
 
+            _currentVideo = null;
             _state = PlaybackState.NO_STREAM;
             Console.WriteLine("Finished");
             if (cancellationToken.IsCancellationRequested)
@@ -94,6 +109,7 @@ namespace DiscordMusicBot.AudioRequesting
                 using (var discord = _audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
                     _state = PlaybackState.PLAYING;
+                    _startTime = DateTime.Now;
                     try
                     {
                         await output.CopyToAsync(discord, cancellationToken);
@@ -145,6 +161,7 @@ namespace DiscordMusicBot.AudioRequesting
             if (_audioClient is not null)
                 return;
 
+            _state = PlaybackState.TRYING_TO_JOIN;
             while (!cancellationToken.IsCancellationRequested)
             {
                 _audioClient = await TryJoinAsync(getRequesterIds);
