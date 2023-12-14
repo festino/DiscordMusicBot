@@ -92,6 +92,9 @@ namespace DiscordMusicBot.Services.Youtube
             {
                 foreach (var video in videoListResponse.Items)
                 {
+                    if (video.Snippet.LiveBroadcastContent != "none")
+                        continue;
+
                     var header = GetHeader(video);
                     // TODO cache VideoHeader
                     foreach (int index in idsIndices[video.Id])
