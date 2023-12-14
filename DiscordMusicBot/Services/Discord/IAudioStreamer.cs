@@ -10,7 +10,9 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public interface IAudioStreamer
     {
-        event AsyncEventHandler<Video>? Finished;
+        enum PlaybackEndedStatus { OK, STOPPED, DISCONNECTED }
+        record PlaybackEndedArgs(PlaybackEndedStatus Status, Video Video);
+        event AsyncEventHandler<PlaybackEndedArgs>? Finished;
 
         Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds);
 
