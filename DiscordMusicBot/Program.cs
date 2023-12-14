@@ -23,6 +23,7 @@ public class Program
 			{ "list", (queue) => new ListCommandExecutor(queue) },
 			{ "stop", (queue) => new StopCommandExecutor(queue) },
 			{ "skip", (queue) => new SkipCommandExecutor(queue) },
+			{ "undo", (queue) => new UndoCommandExecutor(queue) },
 			{ "now", (queue) => new NowCommandExecutor(queue) }
 		};
 		CommandWorker worker = new(executors, downloader, (guildId) => new AudioStreamer(bot, guildId));

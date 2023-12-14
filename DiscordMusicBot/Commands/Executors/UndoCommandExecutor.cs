@@ -8,23 +8,26 @@ using System.Threading.Tasks;
 
 namespace DiscordMusicBot.Commands.Executors
 {
-    public class SkipCommandExecutor : ICommandExecutor
+    public class UndoCommandExecutor : ICommandExecutor
     {
         private readonly RequestQueue _queue;
 
-        public SkipCommandExecutor(RequestQueue queue)
+        public UndoCommandExecutor(RequestQueue queue)
         {
             _queue = queue;
         }
 
         public async Task<CommandResponse> Execute(string args, DiscordMessageInfo discordMessageInfo)
         {
-            Video? video = await _queue.RemoveCurrentAsync();
+            Video[]? videos = await _queue.RemoveLastAsync(discordMessageInfo);
 
-            if (video is null)
+            if (videos is null)
                 return new CommandResponse(CommandResponseStatus.OK, "could not skip video");
 
-            return new CommandResponse(CommandResponseStatus.OK, "skip " + video.Header.Title);
+            if (videos.Length == 1)
+                return new CommandResponse(CommandResponseStatus.OK, "skip " + videos[0].Header.Title);
+
+            return new CommandResponse(CommandResponseStatus.OK, "skip\n" + string.Join("\n", videos.Select((v) => v.Header.Title)));
         }
     }
 }
