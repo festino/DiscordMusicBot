@@ -24,7 +24,7 @@ namespace DiscordMusicBot.Commands.Executors
             if (list.Count == 0)
                 return new CommandResponse(CommandResponseStatus.OK, "queue is empty");
 
-            var fullTime = TimeSpan.FromSeconds(list.Sum(v => v.Header.DurationMs.TotalSeconds));
+            var fullTime = TimeSpan.FromSeconds(list.Sum(v => v.Header.Duration.TotalSeconds));
             string message = $"{list.Count} songs, {fullTime}\n";
             message += string.Join("\n", list.Select(v => v.Header.Title));
             return new CommandResponse(CommandResponseStatus.OK, message);

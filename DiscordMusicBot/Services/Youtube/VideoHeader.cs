@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace DiscordMusicBot.Services.Youtube
 {
-    public record VideoHeader(string ChannelName, string Title, TimeSpan DurationMs);
+    public record VideoHeader(string ChannelName, string Title, TimeSpan Duration);
 }
