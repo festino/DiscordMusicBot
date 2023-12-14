@@ -18,14 +18,14 @@ public class Program
 		DiscordBot bot = new DiscordBot(config);
 		IAudioDownloader downloader = new YoutubeAudioDownloader();
 		YoutubeDataProvider youtubeDataProvider = new YoutubeDataProvider(config);
-		var executors = new Dictionary<string, Func<RequestQueue, ICommandExecutor>>() {
-			{ "play", (queue) => new PlayCommandExecutor(queue, youtubeDataProvider) },
-			{ "list", (queue) => new ListCommandExecutor(queue) },
-			{ "stop", (queue) => new StopCommandExecutor(queue) },
-			{ "skip", (queue) => new SkipCommandExecutor(queue) },
-			{ "undo", (queue) => new UndoCommandExecutor(queue) },
-			{ "now", (queue) => new NowCommandExecutor(queue) },
-			{ "help", (queue) => new HelpCommandExecutor() },
+		var executors = new Dictionary<string, Func<RequestQueue, IAudioStreamer, ICommandExecutor>>() {
+			{ "play", (queue, streamer) => new PlayCommandExecutor(queue, youtubeDataProvider) },
+			{ "list", (queue, streamer) => new ListCommandExecutor(queue) },
+			{ "stop", (queue, streamer) => new StopCommandExecutor(queue) },
+			{ "skip", (queue, streamer) => new SkipCommandExecutor(queue) },
+			{ "undo", (queue, streamer) => new UndoCommandExecutor(queue) },
+			{ "now", (queue, streamer) => new NowCommandExecutor(queue, streamer) },
+			{ "help", (queue, streamer) => new HelpCommandExecutor() },
 		};
 		CommandWorker worker = new(executors, downloader, (guildId) => new AudioStreamer(bot, guildId));
 		bot.CommandRecieved += worker.OnCommand;

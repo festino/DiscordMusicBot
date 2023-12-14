@@ -13,14 +13,14 @@ namespace DiscordMusicBot
     public class CommandWorker : ICommandWorker
     {
         private readonly bool REPLY_UNKNOWN_COMMAND = false;
-        private readonly Dictionary<string, Func<RequestQueue, ICommandExecutor>> executorConstructors = new();
+        private readonly Dictionary<string, Func<RequestQueue, IAudioStreamer, ICommandExecutor>> executorConstructors = new();
         private readonly Dictionary<ulong, Dictionary<string, ICommandExecutor>> executors = new();
 
         private readonly IAudioDownloader _downloader;
         private readonly Func<ulong, IAudioStreamer> _streamerConstructor;
 
         public CommandWorker(
-            Dictionary<string, Func<RequestQueue, ICommandExecutor>> executorConstructors,
+            Dictionary<string, Func<RequestQueue, IAudioStreamer, ICommandExecutor>> executorConstructors,
             IAudioDownloader downloader,
             Func<ulong, IAudioStreamer> streamerConstructor)
         {
@@ -40,9 +40,10 @@ namespace DiscordMusicBot
             else
             {
                 guildExecutors = new();
-                RequestQueue guildQueue = new(_downloader, _streamerConstructor(discordMessageInfo.GuildId));
+                IAudioStreamer streamer = _streamerConstructor(discordMessageInfo.GuildId);
+                RequestQueue guildQueue = new(_downloader, streamer);
                 foreach (var executorConstructor in executorConstructors)
-                    guildExecutors.Add(executorConstructor.Key, executorConstructor.Value(guildQueue));
+                    guildExecutors.Add(executorConstructor.Key, executorConstructor.Value(guildQueue, streamer));
 
                 executors.Add(discordMessageInfo.GuildId, guildExecutors);
             }
