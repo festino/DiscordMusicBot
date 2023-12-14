@@ -16,7 +16,7 @@ namespace DiscordMusicBot.Services.Youtube
     public class YoutubeDataProvider : IYoutubeDataProvider
     {
         private readonly int MAX_RESULTS = 50;
-        private YouTubeService _youtubeService;
+        private readonly YouTubeService _youtubeService;
 
         public YoutubeDataProvider(IYoutubeConfig config)
         {
@@ -126,7 +126,7 @@ namespace DiscordMusicBot.Services.Youtube
             return result.ToArray();
         }
 
-        private VideoHeader GetHeader(Video video)
+        private static VideoHeader GetHeader(Video video)
         {
             return new VideoHeader(
                 video.Snippet.ChannelTitle,
@@ -134,7 +134,7 @@ namespace DiscordMusicBot.Services.Youtube
                 XmlConvert.ToTimeSpan(video.ContentDetails.Duration)
             );
         }
-        private VideoHeader GetHeader(SearchResult video)
+        private static VideoHeader GetHeader(SearchResult video)
         {
             return new VideoHeader(
                 video.Snippet.ChannelTitle,
