@@ -9,8 +9,7 @@ namespace DiscordMusicBot.Services.Discord
 {
     public class VolumeStream : Stream
     {
-        private readonly AnonymousPipeServerStream pipeServer;
-        private readonly AnonymousPipeClientStream pipeClient;
+        private readonly Stream _source;
 
         private float _volume;
 
@@ -24,11 +23,9 @@ namespace DiscordMusicBot.Services.Discord
 
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public VolumeStream()
+        public VolumeStream(Stream source)
         {
-            pipeServer = new();
-            pipeClient = new(pipeServer.GetClientHandleAsString());
-
+            _source = source;
             _volume = 1.0f;
         }
 
@@ -44,7 +41,7 @@ namespace DiscordMusicBot.Services.Discord
 
         public override void Flush()
         {
-            pipeServer.Flush();
+            _source.Flush();
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -60,13 +57,12 @@ namespace DiscordMusicBot.Services.Discord
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             ApplyVolume(buffer, offset, count);
-            await pipeServer.WriteAsync(buffer, offset, count, cancellationToken);
+            await _source.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            int countReal = await pipeClient.ReadAsync(buffer, offset, count, cancellationToken);
-            return countReal;
+            return await _source.ReadAsync(buffer, offset, count, cancellationToken);
         }
 
         private void ApplyVolume(byte[] buffer, int offset, int count)

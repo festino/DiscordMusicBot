@@ -120,18 +120,14 @@ namespace DiscordMusicBot.AudioRequesting
         private async Task PlayAsync(IAudioClient audioClient, Stream pcmStream, CancellationToken cancellationToken)
         {
             using (pcmStream)
-            using (var output = new VolumeStream())
+            using (var output = new VolumeStream(pcmStream))
             using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
             {
                 _state = PlaybackState.PLAYING;
                 _startTime = DateTime.Now;
                 try
                 {
-                    Task[] tasks = new Task[] {
-                        pcmStream.CopyToAsync(output, cancellationToken),
-                        output.CopyToAsync(discord, cancellationToken),
-                    };
-                    await Task.WhenAll(tasks);
+                    await output.CopyToAsync(discord, cancellationToken);
                 }
                 finally
                 {
