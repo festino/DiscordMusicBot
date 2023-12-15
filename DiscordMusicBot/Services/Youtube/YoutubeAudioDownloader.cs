@@ -56,6 +56,7 @@ public class YoutubeAudioDownloader : IAudioDownloader
             return null;
 
         await process.WaitForExitAsync();
+        Console.WriteLine($"Downloaded {youtubeId}");
         return !File.Exists(path) ? null : path;
     }
 
@@ -117,7 +118,6 @@ public class YoutubeAudioDownloader : IAudioDownloader
 
     private async Task OnLoadedAsync(string youtubeId, Stream? stream)
     {
-        Console.WriteLine("Downloaded");
         Task? task;
         if (stream is null)
             task = LoadFailed?.InvokeAsync(this, new LoadFailedArgs(youtubeId));
