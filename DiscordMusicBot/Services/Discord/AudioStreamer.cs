@@ -104,11 +104,12 @@ namespace DiscordMusicBot.AudioRequesting
             {
                 await PlayAsync(_audioClient, pcmStream, cancellationToken);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 if (!cancellationToken.IsCancellationRequested)
                 {
                     Console.WriteLine("Audio client was disconnected!");
+                    Console.WriteLine(e);
                     _audioClient = null;
                 }
             }
@@ -120,13 +121,18 @@ namespace DiscordMusicBot.AudioRequesting
         {
             using (pcmStream)
             {
+                using (var output = new VolumeStream())
                 using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
                     _state = PlaybackState.PLAYING;
                     _startTime = DateTime.Now;
                     try
                     {
-                        await pcmStream.CopyToAsync(discord, cancellationToken);
+                        Task[] tasks = new Task[] {
+                            pcmStream.CopyToAsync(output, cancellationToken),
+                            output.CopyToAsync(discord, cancellationToken),
+                        };
+                        await Task.WhenAll(tasks);
                     }
                     finally
                     {
