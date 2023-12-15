@@ -11,14 +11,6 @@ namespace DiscordMusicBot.Services.Discord
     {
         private readonly AnonymousPipeServerStream pipeServer;
         private readonly AnonymousPipeClientStream pipeClient;
-        /*private readonly byte[] _buffer;
-        private int _length;
-
-        private bool _stopped = false;
-
-        private object _locker = new();
-        private SemaphoreSlim _semaphoreWrite = new SemaphoreSlim(1, 1);
-        private SemaphoreSlim _semaphoreRead = new SemaphoreSlim(0, 1);*/
 
         private float _volume;
 
@@ -36,87 +28,22 @@ namespace DiscordMusicBot.Services.Discord
         {
             pipeServer = new();
             pipeClient = new(pipeServer.GetClientHandleAsString());
-            /*_buffer = new byte[bufferSize];
-            _length = 0;*/
 
             _volume = 1.0f;
         }
 
-
-        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override int Read(byte[] buffer, int offset, int count)
         {
-            /*while (count > 0)
-            {
-                if (_stopped)
-                    throw new InvalidOperationException($"{nameof(VolumeStream)} was flushed and cannot be written");
-
-                if (_length == _buffer.Length)
-                {
-                    Console.WriteLine("Waiting write");
-                    await _semaphoreWrite.WaitAsync();
-                }
-
-                lock (_locker)
-                {
-
-                    int copyCount = Math.Min(count, _buffer.Length - _length);
-                    Array.Copy(buffer, offset, _buffer, 0, copyCount);
-                    count -= copyCount;
-                    int prevLength = _length;
-                    _length += copyCount;
-
-                    if (prevLength == 0)
-                    {
-                        Console.WriteLine("Releasing read");
-                        _semaphoreRead.Release();
-                    }
-                }
-            }*/
-            ApplyVolume(buffer, offset, count);
-            await pipeServer.WriteAsync(buffer, offset, count, cancellationToken);
+            throw new NotImplementedException();
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override void Write(byte[] buffer, int offset, int count)
         {
-            /*if (_length == 0)
-            {
-                Console.WriteLine("Waiting read");
-                await _semaphoreRead.WaitAsync();
-            }
-
-            if (_stopped)
-                return 0;
-
-            int copyCount;
-            lock (_locker)
-            {
-                copyCount = Math.Min(count, _length);
-                ApplyVolume(_buffer, 0, copyCount);
-                Array.Copy(_buffer, 0, buffer, offset, copyCount);
-                int prevLength = _length;
-                _length -= copyCount;
-                // TODO replace shift with wrapping
-                ShiftLeft(copyCount, _length);
-
-                if (prevLength == _buffer.Length)
-                {
-                    Console.WriteLine("Releasing write");
-                    _semaphoreWrite.Release();
-                }
-            }
-
-            return copyCount;*/
-            
-            int countReal = await pipeClient.ReadAsync(buffer, offset, count, cancellationToken);
-            return countReal;
+            throw new NotImplementedException();
         }
 
         public override void Flush()
         {
-            /*Console.WriteLine("Stopping");
-            _stopped = true;
-            _semaphoreWrite.Release();
-            _semaphoreRead.Release();*/
             pipeServer.Flush();
         }
 
@@ -130,14 +57,17 @@ namespace DiscordMusicBot.Services.Discord
             throw new NotImplementedException();
         }
 
-        /*private void ShiftLeft(int offset, int count)
+        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            //Array.Copy(_buffer, offset, _buffer, 0, count);
-            for (int i = 0; i < count; i++)
-            {
-                _buffer[i] = _buffer[offset + i];
-            }
-        }*/
+            ApplyVolume(buffer, offset, count);
+            await pipeServer.WriteAsync(buffer, offset, count, cancellationToken);
+        }
+
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            int countReal = await pipeClient.ReadAsync(buffer, offset, count, cancellationToken);
+            return countReal;
+        }
 
         private void ApplyVolume(byte[] buffer, int offset, int count)
         {
@@ -154,18 +84,6 @@ namespace DiscordMusicBot.Services.Discord
                 buffer[i] = (byte)sample;
                 buffer[i + 1] = (byte) (sample >> 8);
             }
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            //return ReadAsync(buffer, offset, count).Result;
-            throw new NotImplementedException();
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            //ReadAsync(buffer, offset, count).Wait();
-            throw new NotImplementedException();
         }
     }
 }
