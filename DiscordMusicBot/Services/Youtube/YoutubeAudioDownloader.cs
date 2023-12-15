@@ -59,9 +59,51 @@ public class YoutubeAudioDownloader : IAudioDownloader
         return !File.Exists(path) ? null : path;
     }
 
+    private async Task<string?> GetWebaLink(string youtubeId)
+    {
+        if (!IsValidYoutubeId(youtubeId))
+            return null;
+
+        Process? process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "yt-dlp",
+            Arguments = $"--extract-audio --quiet --simulate --print url https://www.youtube.com/watch?v={youtubeId}",
+            UseShellExecute = false,
+            RedirectStandardOutput = true
+        });
+
+        if (process is null)
+            return null;
+
+        string link = process.StandardOutput.ReadToEnd();
+        await process.WaitForExitAsync();
+        // invalid video may return "NA" string
+        return link.Contains("https") ? link : null;
+    }
+
+    private Stream? GetPCMStream(string url)
+    {
+        if (url.Contains('"'))
+            return null;
+
+        Process? process = Process.Start(new ProcessStartInfo
+        {
+            FileName = "ffmpeg",
+            Arguments = $"-hide_banner -loglevel panic -i \"{url}\" -ac 2 -f s16le -ar 48000 pipe:1",
+            UseShellExecute = false,
+            RedirectStandardOutput = true
+        });
+
+        if (process is null)
+            return null;
+
+        return process.StandardOutput.BaseStream;
+    }
+
     private async Task DownloadAsync(string youtubeId)
     {
-        string? path = await DownloadMp3Async(youtubeId);
+        string? link = await GetWebaLink(youtubeId);
+        Stream? stream = link is null? null : GetPCMStream(link);
         bool notify = false;
         lock (_downloadingIds)
         {
@@ -70,17 +112,17 @@ public class YoutubeAudioDownloader : IAudioDownloader
         }
 
         if (notify)
-            await OnLoadedAsync(youtubeId, path);
+            await OnLoadedAsync(youtubeId, stream);
     }
 
-    private async Task OnLoadedAsync(string youtubeId, string? path)
+    private async Task OnLoadedAsync(string youtubeId, Stream? stream)
     {
         Console.WriteLine("Downloaded");
         Task? task;
-        if (path is null)
+        if (stream is null)
             task = LoadFailed?.InvokeAsync(this, new LoadFailedArgs(youtubeId));
         else
-            task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, path));
+            task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, stream));
 
         if (task is not null)
             await task;

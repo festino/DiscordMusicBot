@@ -4,7 +4,7 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public interface IAudioDownloader
     {
-        record LoadCompletedArgs(string YoutubeId, string Path);
+        record LoadCompletedArgs(string YoutubeId, Stream PcmStream);
         record LoadFailedArgs(string YoutubeId);
 
         event AsyncEventHandler<LoadCompletedArgs>? LoadCompleted;

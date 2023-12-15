@@ -46,11 +46,11 @@ namespace DiscordMusicBot.AudioRequesting
             return new AudioInfo(_currentVideo, DateTime.Now - _startTime);
         }
 
-        public async Task JoinAndPlayAsync(Video video, string path, Func<ulong[]> getRequesterIds)
+        public async Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds)
         {
             CancellationToken cancellationToken = _cancellationTokenSource.Token;
             await JoinAsync(getRequesterIds, cancellationToken);
-            await StartNewAsync(video, path, cancellationToken);
+            await StartNewAsync(video, pcmStream, cancellationToken);
         }
 
         public async Task PauseAsync()
@@ -74,11 +74,11 @@ namespace DiscordMusicBot.AudioRequesting
             Console.WriteLine("Stopped audio streamer");
         }
 
-        private async Task StartNewAsync(Video video, string path, CancellationToken cancellationToken)
+        private async Task StartNewAsync(Video video, Stream pcmStream, CancellationToken cancellationToken)
         {
             Console.WriteLine("Starting");
             _currentVideo = video;
-            _playTask = PlayAudio(path, cancellationToken);
+            _playTask = PlayAudio(pcmStream, cancellationToken);
             await _playTask;
             Console.WriteLine("Finished");
 
@@ -92,7 +92,7 @@ namespace DiscordMusicBot.AudioRequesting
                 await task;
         }
 
-        private async Task PlayAudio(string path, CancellationToken cancellationToken)
+        private async Task PlayAudio(Stream pcmStream, CancellationToken cancellationToken)
         {
             if (_audioClient is null)
             {
@@ -102,7 +102,7 @@ namespace DiscordMusicBot.AudioRequesting
 
             try
             {
-                await PlayAsync(_audioClient, path, cancellationToken);
+                await PlayAsync(_audioClient, pcmStream, cancellationToken);
             }
             catch (Exception)
             {
@@ -116,43 +116,24 @@ namespace DiscordMusicBot.AudioRequesting
             _state = PlaybackState.NO_STREAM;
         }
 
-        private async Task PlayAsync(IAudioClient audioClient, string path, CancellationToken cancellationToken)
+        private async Task PlayAsync(IAudioClient audioClient, Stream pcmStream, CancellationToken cancellationToken)
         {
-            using (var ffmpeg = CreateStream(path))
+            using (pcmStream)
             {
-                if (ffmpeg is null)
-                    return;
-
-                using (var output = ffmpeg.StandardOutput.BaseStream)
                 using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
                     _state = PlaybackState.PLAYING;
                     _startTime = DateTime.Now;
                     try
                     {
-                        await output.CopyToAsync(discord, cancellationToken);
+                        await pcmStream.CopyToAsync(discord, cancellationToken);
                     }
                     finally
                     {
-                        ffmpeg.Close();
-                        await ffmpeg.WaitForExitAsync(cancellationToken);
                         await discord.FlushAsync(cancellationToken);
                     }
                 }
             }
-        }
-
-        private Process? CreateStream(string path)
-        {
-            // Probably mp3 cannot be piped (stream mus be seekable)
-            // Therefore use "-i <path>" instead of "-i pipe:0"
-            return Process.Start(new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $"-hide_banner -loglevel panic -f mp3 -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            });
         }
 
         private Tuple<IVoiceChannel, IGuildUser>? FindChannel(ulong[] requesterIds)
