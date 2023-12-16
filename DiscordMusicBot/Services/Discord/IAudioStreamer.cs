@@ -2,6 +2,7 @@
 using DiscordMusicBot.Services.Discord;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace DiscordMusicBot.AudioRequesting
         record PlaybackEndedArgs(PlaybackEndedStatus Status, Video Video);
         event AsyncEventHandler<PlaybackEndedArgs>? Finished;
 
-        Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds);
+        Task JoinAndPlayAsync(Video video, Process pcmStreamProcess, Func<ulong[]> getRequesterIds);
 
         Task PauseAsync();
         Task ResumeAsync();

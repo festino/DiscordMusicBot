@@ -1,6 +1,7 @@
 ﻿using AsyncEvent;
 using DiscordMusicBot.AudioRequesting;
 using System.Diagnostics;
+using System.Net;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
 
 public class YoutubeAudioDownloader : IAudioDownloader
@@ -76,13 +77,30 @@ public class YoutubeAudioDownloader : IAudioDownloader
         if (process is null)
             return null;
 
-        string link = process.StandardOutput.ReadToEnd();
+        string link = process.StandardOutput.ReadToEnd().Trim();
         await process.WaitForExitAsync();
         // invalid video may return "NA" string
         return link.Contains("https") ? link : null;
     }
 
-    private Stream? GetPCMStream(string url)
+    private async Task CopyFromUrlAsync(Stream destination, string url)
+    {
+        using (destination)
+        using (var client = new HttpClient())
+        {
+            try
+            {
+                Stream source = await client.GetStreamAsync(url);
+                await source.CopyToAsync(destination);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Could not continue downloading {url}\n{e}");
+            }
+        }
+    }
+
+    private Process? GetPCMStreamProcess(string url)
     {
         if (url.Contains('"'))
             return null;
@@ -90,21 +108,24 @@ public class YoutubeAudioDownloader : IAudioDownloader
         Process? process = Process.Start(new ProcessStartInfo
         {
             FileName = "ffmpeg",
-            Arguments = $"-hide_banner -loglevel panic -i \"{url}\" -ac 2 -f s16le -ar 48000 pipe:1",
+            Arguments = $"-hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
             UseShellExecute = false,
+            RedirectStandardInput = true,
             RedirectStandardOutput = true
         });
 
         if (process is null)
             return null;
 
-        return process.StandardOutput.BaseStream;
+        Task.Run(() => CopyFromUrlAsync(process.StandardInput.BaseStream, url));
+        
+        return process;
     }
 
     private async Task DownloadAsync(string youtubeId)
     {
         string? link = await GetWebaLink(youtubeId);
-        Stream? stream = link is null? null : GetPCMStream(link);
+        Process? process = link is null? null : GetPCMStreamProcess(link);
         bool notify = false;
         lock (_downloadingIds)
         {
@@ -113,19 +134,28 @@ public class YoutubeAudioDownloader : IAudioDownloader
         }
 
         if (notify)
-            await OnLoadedAsync(youtubeId, stream);
+            await OnLoadedAsync(youtubeId, process);
     }
 
-    private async Task OnLoadedAsync(string youtubeId, Stream? stream)
+    private async Task OnLoadedAsync(string youtubeId, Process? process)
     {
         Task? task;
-        if (stream is null)
+        if (process is null)
+        {
             task = LoadFailed?.InvokeAsync(this, new LoadFailedArgs(youtubeId));
+            if (task is not null)
+                await task;
+        }
         else
-            task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, stream));
+        {
+            using (var stream = process.StandardOutput.BaseStream)
+            {
+                task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, process));
+                if (task is not null)
+                    await task;
+            }
 
-        if (task is not null)
-            await task;
+        }
     }
 
     private static bool IsValidYoutubeId(string youtubeId)

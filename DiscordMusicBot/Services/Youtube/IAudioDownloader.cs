@@ -1,10 +1,11 @@
 ﻿using AsyncEvent;
+using System.Diagnostics;
 
 namespace DiscordMusicBot.AudioRequesting
 {
     public interface IAudioDownloader
     {
-        record LoadCompletedArgs(string YoutubeId, Stream PcmStream);
+        record LoadCompletedArgs(string YoutubeId, Process PcmStreamProcess);
         record LoadFailedArgs(string YoutubeId);
 
         event AsyncEventHandler<LoadCompletedArgs>? LoadCompleted;

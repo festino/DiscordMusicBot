@@ -117,7 +117,7 @@ namespace DiscordMusicBot.AudioRequesting
             Video video = _videos[0];
             AddToHistory(video);
             Console.WriteLine("Joining");
-            await _audioStreamer.JoinAndPlayAsync(video, args.PcmStream, GetRequesterIds);
+            await _audioStreamer.JoinAndPlayAsync(video, args.PcmStreamProcess, GetRequesterIds);
         }
 
         private ulong[] GetRequesterIds()
