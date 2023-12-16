@@ -93,6 +93,7 @@ public class YoutubeAudioDownloader : IAudioDownloader
                 Stream source = await client.GetStreamAsync(url);
                 await source.CopyToAsync(destination);
             }
+            catch (IOException) { }
             catch (Exception e)
             {
                 Console.WriteLine($"Could not continue downloading {url}\n{e}");
