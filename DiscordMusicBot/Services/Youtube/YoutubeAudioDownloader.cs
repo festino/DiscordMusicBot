@@ -100,7 +100,7 @@ public class YoutubeAudioDownloader : IAudioDownloader
         }
     }
 
-    private Process? GetPCMStreamProcess(string url)
+    private Stream? GetPCMStream(string url)
     {
         if (url.Contains('"'))
             return null;
@@ -119,13 +119,13 @@ public class YoutubeAudioDownloader : IAudioDownloader
 
         Task.Run(() => CopyFromUrlAsync(process.StandardInput.BaseStream, url));
         
-        return process;
+        return process.StandardOutput.BaseStream;
     }
 
     private async Task DownloadAsync(string youtubeId)
     {
         string? link = await GetWebaLink(youtubeId);
-        Process? process = link is null? null : GetPCMStreamProcess(link);
+        Stream? stream = link is null? null : GetPCMStream(link);
         bool notify = false;
         lock (_downloadingIds)
         {
@@ -134,28 +134,23 @@ public class YoutubeAudioDownloader : IAudioDownloader
         }
 
         if (notify)
-            await OnLoadedAsync(youtubeId, process);
+            await OnLoadedAsync(youtubeId, stream);
     }
 
-    private async Task OnLoadedAsync(string youtubeId, Process? process)
+    private async Task OnLoadedAsync(string youtubeId, Stream? stream)
     {
         Task? task;
-        if (process is null)
+        if (stream is null)
         {
             task = LoadFailed?.InvokeAsync(this, new LoadFailedArgs(youtubeId));
-            if (task is not null)
-                await task;
         }
         else
         {
-            using (var stream = process.StandardOutput.BaseStream)
-            {
-                task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, process));
-                if (task is not null)
-                    await task;
-            }
-
+            task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, stream));
         }
+
+        if (task is not null)
+            await task;
     }
 
     private static bool IsValidYoutubeId(string youtubeId)

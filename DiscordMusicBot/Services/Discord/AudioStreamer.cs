@@ -46,11 +46,11 @@ namespace DiscordMusicBot.AudioRequesting
             return new AudioInfo(_currentVideo, DateTime.Now - _startTime);
         }
 
-        public async Task JoinAndPlayAsync(Video video, Process pcmStreamProcess, Func<ulong[]> getRequesterIds)
+        public async Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds)
         {
             CancellationToken cancellationToken = _cancellationTokenSource.Token;
             await JoinAsync(getRequesterIds, cancellationToken);
-            await StartNewAsync(video, pcmStreamProcess, cancellationToken);
+            await StartNewAsync(video, pcmStream, cancellationToken);
         }
 
         public async Task PauseAsync()
@@ -74,11 +74,11 @@ namespace DiscordMusicBot.AudioRequesting
             Console.WriteLine("Stopped audio streamer");
         }
 
-        private async Task StartNewAsync(Video video, Process pcmStreamProcess, CancellationToken cancellationToken)
+        private async Task StartNewAsync(Video video, Stream pcmStream, CancellationToken cancellationToken)
         {
             Console.WriteLine("Starting");
             _currentVideo = video;
-            _playTask = PlayAudio(pcmStreamProcess, cancellationToken);
+            _playTask = PlayAudio(pcmStream, cancellationToken);
             await _playTask;
             Console.WriteLine("Finished");
 
@@ -92,7 +92,7 @@ namespace DiscordMusicBot.AudioRequesting
                 await task;
         }
 
-        private async Task PlayAudio(Process pcmStreamProcess, CancellationToken cancellationToken)
+        private async Task PlayAudio(Stream pcmStream, CancellationToken cancellationToken)
         {
             if (_audioClient is null)
             {
@@ -102,7 +102,7 @@ namespace DiscordMusicBot.AudioRequesting
 
             try
             {
-                await PlayAsync(_audioClient, pcmStreamProcess, cancellationToken);
+                await PlayAsync(_audioClient, pcmStream, cancellationToken);
             }
             catch (Exception e)
             {
@@ -117,10 +117,9 @@ namespace DiscordMusicBot.AudioRequesting
             _state = PlaybackState.NO_STREAM;
         }
 
-        private async Task PlayAsync(IAudioClient audioClient, Process pcmStreamProcess, CancellationToken cancellationToken)
+        private async Task PlayAsync(IAudioClient audioClient, Stream pcmStream, CancellationToken cancellationToken)
         {
-            using (pcmStreamProcess)
-            using (var pcmStream = pcmStreamProcess.StandardOutput.BaseStream)
+            using (pcmStream)
             using (var output = new VolumeStream(pcmStream))
             using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
             {
