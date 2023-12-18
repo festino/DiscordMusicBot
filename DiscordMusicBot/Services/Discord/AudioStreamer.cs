@@ -77,11 +77,11 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task StartNewAsync(Video video, Stream pcmStream, CancellationToken cancellationToken)
         {
-            Console.WriteLine("Starting");
+            Console.WriteLine($"Starting {video.Header}");
             _currentVideo = video;
             _playTask = PlayAudio(pcmStream, cancellationToken);
             await _playTask;
-            Console.WriteLine("Finished");
+            Console.WriteLine($"Finished {video.Header}");
 
             PlaybackEndedStatus status = PlaybackEndedStatus.OK;
             if (cancellationToken.IsCancellationRequested)
