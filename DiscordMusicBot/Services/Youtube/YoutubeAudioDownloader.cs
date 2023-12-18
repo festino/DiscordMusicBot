@@ -1,16 +1,22 @@
 ﻿using AsyncEvent;
 using DiscordMusicBot.AudioRequesting;
 using System.Diagnostics;
-using System.Net;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
 
 public class YoutubeAudioDownloader : IAudioDownloader
 {
+    private readonly HttpClient _httpClient;
+
     private readonly List<string> _downloadingIds = new();
     private readonly List<string> _notifyIds = new();
 
     public event AsyncEventHandler<LoadCompletedArgs>? LoadCompleted;
     public event AsyncEventHandler<LoadFailedArgs>? LoadFailed;
+
+    public YoutubeAudioDownloader()
+    {
+        _httpClient = new HttpClient();
+    }
 
     public void RequestDownload(string youtubeId, bool notify)
     {
@@ -86,14 +92,23 @@ public class YoutubeAudioDownloader : IAudioDownloader
     private async Task CopyFromUrlAsync(Stream destination, string url)
     {
         using (destination)
-        using (var client = new HttpClient())
         {
             try
             {
-                Stream source = await client.GetStreamAsync(url);
+                Stream source = await _httpClient.GetStreamAsync(url);
                 await source.CopyToAsync(destination);
             }
-            catch (IOException) { }
+            catch (IOException e)
+            {
+                if (e.InnerException is null)
+                {
+                    Console.WriteLine($"Channel probably was closed: video was downloaded or skipped");
+                }
+                else
+                {
+                    Console.WriteLine($"Could not continue downloading {url}\n{e}");
+                }
+            }
             catch (Exception e)
             {
                 Console.WriteLine($"Could not continue downloading {url}\n{e}");
