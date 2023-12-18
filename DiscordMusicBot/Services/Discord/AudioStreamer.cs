@@ -119,19 +119,27 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task PlayAsync(IAudioClient audioClient, Stream pcmStream, CancellationToken cancellationToken)
         {
+            // TODO try load average volume 
             using (pcmStream)
-            using (var output = new VolumeStream(pcmStream))
-            using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
+            using (var output = new VolumeStream(pcmStream, null))
             {
-                _state = PlaybackState.PLAYING;
-                _startTime = DateTime.Now;
-                try
+                using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
-                    await output.CopyToAsync(discord, cancellationToken);
+                    _state = PlaybackState.PLAYING;
+                    _startTime = DateTime.Now;
+                    try
+                    {
+                        await output.CopyToAsync(discord, cancellationToken);
+                    }
+                    finally
+                    {
+                        await discord.FlushAsync(cancellationToken);
+                    }
                 }
-                finally
+
+                if (output.AverageVolume is not null)
                 {
-                    await discord.FlushAsync(cancellationToken);
+                    // TODO save average volume 
                 }
             }
         }

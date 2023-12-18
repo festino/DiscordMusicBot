@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Pipes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +13,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private float _volume;
 
-        private int _avgCount = 0;
+        private int _sampleCount = 0;
         private float _avgVolume = 0.0f;
 
         public float? AverageVolume { get; private set; }
@@ -32,6 +31,11 @@ namespace DiscordMusicBot.Services.Discord
             _volume = 0.25f;
             _channelCount = 2;
             AverageVolume = averageVolume;
+            if (averageVolume is not null)
+            {
+                _sampleCount = int.MaxValue;
+                _avgVolume = (float)averageVolume;
+            }
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -45,13 +49,16 @@ namespace DiscordMusicBot.Services.Discord
                 throw new InvalidOperationException($"{nameof(VolumeStream)} was expecting 16-bit numbers");
 
             int copyCount = await _source.ReadAsync(buffer, offset, count, cancellationToken);
-            UpdateVolume(buffer, offset, copyCount);
+            if (AverageVolume is null)
+            {
+                UpdateVolume(buffer, offset, copyCount);
+                if (copyCount == 0)
+                {
+                    AverageVolume = _avgVolume;
+                }
+            }
             ApplyVolume(buffer, offset, copyCount);
 
-            if (copyCount == 0)
-            {
-                AverageVolume = _avgVolume;
-            }
             return copyCount;
         }
 
@@ -81,20 +88,20 @@ namespace DiscordMusicBot.Services.Discord
             {
                 short sample = (short)(buffer[i] | buffer[i + 1] << 8);
 
-                float frac = 1.0f / (_avgCount + 1);
-                _avgVolume = _avgVolume * (_avgCount * frac) + Math.Abs(sample * frac);
-                _avgCount++;
+                float frac = 1.0f / (_sampleCount + 1);
+                _avgVolume = _avgVolume * (_sampleCount * frac) + Math.Abs(sample * frac);
+                _sampleCount++;
             }
         }
 
         private void ApplyVolume(byte[] buffer, int offset, int count)
         {
-            float baseVolume = 1 << 13;
+            float targetAvgVolume = 1 << 13;
             float minAvgMult = 0.1f;
-            float blockVolumeMult = 1.0f / Math.Max(minAvgMult, _avgVolume / baseVolume);
+            float blockVolumeMult = 1.0f / Math.Max(minAvgMult, _avgVolume / targetAvgVolume);
 
-            int initTicks = 48100 * 5 * _channelCount;
-            float power = Math.Max(0.0f, (initTicks - _avgCount) / (float)initTicks);
+            int initSampleCount = 48100 * 5 * _channelCount;
+            float power = Math.Max(0.0f, (initSampleCount - _sampleCount) / (float)initSampleCount);
             blockVolumeMult = 1.0f * power + blockVolumeMult * (1.0f - power);
             blockVolumeMult *= _volume;
 
