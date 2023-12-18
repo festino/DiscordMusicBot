@@ -12,6 +12,8 @@ namespace DiscordMusicBot.Services.Discord
 {
     public class DiscordBot
     {
+        private const int MAX_MESSAGE_LENGTH = 2000;
+
         private readonly string _commandPrefix;
         private readonly DiscordSocketClient _client;
         private readonly string _token;
@@ -72,7 +74,12 @@ namespace DiscordMusicBot.Services.Discord
             if (response.Message.Length == 0)
                 return;
 
-            await message.Channel.SendMessageAsync(response.Message);
+            string responseMessage = response.Message;
+            if (responseMessage.Length > MAX_MESSAGE_LENGTH)
+            {
+                responseMessage = responseMessage[..(MAX_MESSAGE_LENGTH - 3)] + "...";
+            }
+            await message.Channel.SendMessageAsync(responseMessage);
         }
     }
 }
