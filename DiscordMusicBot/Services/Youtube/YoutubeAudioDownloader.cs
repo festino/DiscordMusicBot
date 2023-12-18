@@ -1,6 +1,7 @@
 ﻿using AsyncEvent;
 using DiscordMusicBot.AudioRequesting;
 using System.Diagnostics;
+using System.Net.Sockets;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
 
 namespace DiscordMusicBot.Services.Youtube
@@ -18,6 +19,8 @@ namespace DiscordMusicBot.Services.Youtube
         public YoutubeAudioDownloader()
         {
             _httpClient = new HttpClient();
+            //_httpClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
+            //_httpClient.DefaultRequestHeaders.Add("Keep-Alive", "3600");
         }
 
         public void RequestDownload(string youtubeId, bool notify)
@@ -93,29 +96,54 @@ namespace DiscordMusicBot.Services.Youtube
 
         private async Task CopyFromUrlAsync(Stream destination, string url)
         {
+            // "it's a rare problem"
+            // https://github.com/dotnet/runtime/issues/60644
             using (destination)
             {
-                try
+                long? lastPosition = null;
+                do
                 {
-                    Stream source = await _httpClient.GetStreamAsync(url);
-                    await source.CopyToAsync(destination);
+                    long position = lastPosition is null ? 0L : (long)lastPosition;
+                    lastPosition = await TryCopyFromUrlAsync(destination, url, position);
                 }
-                catch (IOException e)
-                {
-                    if (e.InnerException is null)
-                    {
-                        Console.WriteLine($"Channel probably was closed: video was downloaded or skipped");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Could not continue downloading {url}\n{e}");
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Could not continue downloading {url}\n{e}");
-                }
+                while (lastPosition is not null);
+                
             }
+        }
+
+        private async Task<long?> TryCopyFromUrlAsync(Stream destination, string url, long position)
+        {
+            Stream source = await _httpClient.GetStreamAsync(url);
+            try
+            {
+                if (position > 0)
+                {
+                    int bufferSize = 1024 * 1024;
+                    byte[] buffer = new byte[bufferSize];
+                    while (position > 0)
+                    {
+                        int count = (int)Math.Min(bufferSize, position);
+                        await source.ReadAsync(buffer, 0, count);
+                        position -= count;
+                    }
+                }
+                await source.CopyToAsync(destination);
+            }
+            catch (IOException e) when (e.InnerException is null)
+            {
+                Console.WriteLine($"Channel probably was closed: video was downloaded or skipped");
+            }
+            catch (IOException e) when (e.InnerException is SocketException)
+            {
+                Console.WriteLine($"Could not continue downloading, retrying since {source.Position}");
+                return source.Position;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Could not continue downloading\n{e}");
+            }
+
+            return null;
         }
 
         private Stream? GetPCMStream(string url)
