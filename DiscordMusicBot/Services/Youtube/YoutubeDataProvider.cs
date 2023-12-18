@@ -156,7 +156,8 @@ namespace DiscordMusicBot.Services.Youtube
             startIndex++;
             int endIndex = arg.IndexOf('?', startIndex);
             endIndex = endIndex < 0 ? arg.Length : endIndex;
-            return arg[startIndex..endIndex];
+            videoId = arg[startIndex..endIndex];
+            return YoutubeUtils.IsValidYoutubeId(videoId) ? videoId : null;
         }
 
         private string? TryParsePlaylistId(string arg)
