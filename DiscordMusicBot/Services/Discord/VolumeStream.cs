@@ -17,30 +17,50 @@ namespace DiscordMusicBot.Services.Discord
         private int _avgCount = 0;
         private float _avgVolume = 0.0f;
 
+        public float? AverageVolume { get; private set; }
+
         public override bool CanRead => true;
-
         public override bool CanSeek => false;
-
-        public override bool CanWrite => true;
+        public override bool CanWrite => false;
 
         public override long Length => throw new NotImplementedException();
-
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public VolumeStream(Stream source)
+        public VolumeStream(Stream source, float? averageVolume)
         {
             _source = source;
             _volume = 0.25f;
             _channelCount = 2;
-            // try load avg volume
+            AverageVolume = averageVolume;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
+            return _source.ReadAsync(buffer, offset, count).Result;
+        }
+
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            if (count % 2 != 0)
+                throw new InvalidOperationException($"{nameof(VolumeStream)} was expecting 16-bit numbers");
+
+            int copyCount = await _source.ReadAsync(buffer, offset, count, cancellationToken);
+            UpdateVolume(buffer, offset, copyCount);
+            ApplyVolume(buffer, offset, copyCount);
+
+            if (copyCount == 0)
+            {
+                AverageVolume = _avgVolume;
+            }
+            return copyCount;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
         {
             throw new NotImplementedException();
         }
@@ -50,37 +70,13 @@ namespace DiscordMusicBot.Services.Discord
             _source.Flush();
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotImplementedException();
-        }
-
         public override void SetLength(long value)
         {
             throw new NotImplementedException();
         }
 
-        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        private void UpdateVolume(byte[] buffer, int offset, int count)
         {
-            throw new NotImplementedException();
-        }
-
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            int copyCount = await _source.ReadAsync(buffer, offset, count, cancellationToken);
-            ApplyVolume(buffer, offset, copyCount);
-            if (copyCount == 0)
-            {
-                // save avg volume
-            }
-            return copyCount;
-        }
-
-        private void ApplyVolume(byte[] buffer, int offset, int count)
-        {
-            if (count % 2 != 0)
-                throw new InvalidOperationException($"{nameof(VolumeStream)} can not give odd bytes count");
-
             for (int i = offset; i < offset + count; i += 2)
             {
                 short sample = (short)(buffer[i] | buffer[i + 1] << 8);
@@ -89,7 +85,10 @@ namespace DiscordMusicBot.Services.Discord
                 _avgVolume = _avgVolume * (_avgCount * frac) + Math.Abs(sample * frac);
                 _avgCount++;
             }
+        }
 
+        private void ApplyVolume(byte[] buffer, int offset, int count)
+        {
             float baseVolume = 1 << 13;
             float minAvgMult = 0.1f;
             float blockVolumeMult = 1.0f / Math.Max(minAvgMult, _avgVolume / baseVolume);
@@ -103,11 +102,11 @@ namespace DiscordMusicBot.Services.Discord
             int maxSample = short.MaxValue;
             for (int i = offset; i < offset + count; i += 2)
             {
-                short sample = (short) (buffer[i] | buffer[i + 1] << 8);
-                int v = (int) (sample * blockVolumeMult);
+                short sample = (short)(buffer[i] | buffer[i + 1] << 8);
+                int v = (int)(sample * blockVolumeMult);
                 sample = (short)Math.Clamp(v, minSample, maxSample);
                 buffer[i] = (byte)sample;
-                buffer[i + 1] = (byte) (sample >> 8);
+                buffer[i + 1] = (byte)(sample >> 8);
             }
         }
     }
