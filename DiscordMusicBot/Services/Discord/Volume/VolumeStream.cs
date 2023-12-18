@@ -4,17 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DiscordMusicBot.Services.Discord
+namespace DiscordMusicBot.Services.Discord.Volume
 {
     public class VolumeStream : Stream
     {
+        private readonly IVolumeBalancer _volumeBalancer;
         private readonly Stream _source;
-        private readonly int _channelCount;
 
         private float _volume;
 
-        private int _sampleCount = 0;
-        private float _avgVolume = 0.0f;
+        private const int CHANNEL_COUNT = 2;
+        private const int SAMPLES_PER_SECOND = 48100;
+        private const int INIT_SAMPLE_COUNT = 5 * SAMPLES_PER_SECOND * CHANNEL_COUNT;
+        private int _initSampleCount = INIT_SAMPLE_COUNT;
 
         public float? AverageVolume { get; private set; }
 
@@ -25,16 +27,15 @@ namespace DiscordMusicBot.Services.Discord
         public override long Length => throw new NotImplementedException();
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public VolumeStream(Stream source, float? averageVolume)
+        public VolumeStream(IVolumeBalancer volumeBalancer, float? averageVolume, Stream source)
         {
+            _volumeBalancer = volumeBalancer;
             _source = source;
             _volume = 0.25f;
-            _channelCount = 2;
             AverageVolume = averageVolume;
-            if (averageVolume is not null)
+            if (AverageVolume is not null)
             {
-                _sampleCount = int.MaxValue;
-                _avgVolume = (float)averageVolume;
+                _initSampleCount = 0;
             }
         }
 
@@ -49,15 +50,17 @@ namespace DiscordMusicBot.Services.Discord
                 throw new InvalidOperationException($"{nameof(VolumeStream)} was expecting 16-bit numbers");
 
             int copyCount = await _source.ReadAsync(buffer, offset, count, cancellationToken);
+            if (copyCount == 0)
+            {
+                AverageVolume = _volumeBalancer.BlockAverageVolume;
+                return copyCount;
+            }
+
             if (AverageVolume is null)
             {
-                UpdateVolume(buffer, offset, copyCount);
-                if (copyCount == 0)
-                {
-                    AverageVolume = _avgVolume;
-                }
+                _volumeBalancer.UpdateVolume(buffer, offset, copyCount);
             }
-            ApplyVolume(buffer, offset, copyCount);
+            ApplyVolume(buffer, offset, copyCount, AverageVolume ?? _volumeBalancer.BlockAverageVolume);
 
             return copyCount;
         }
@@ -82,27 +85,14 @@ namespace DiscordMusicBot.Services.Discord
             throw new NotImplementedException();
         }
 
-        private void UpdateVolume(byte[] buffer, int offset, int count)
-        {
-            for (int i = offset; i < offset + count; i += 2)
-            {
-                short sample = (short)(buffer[i] | buffer[i + 1] << 8);
-
-                float frac = 1.0f / (_sampleCount + 1);
-                _avgVolume = _avgVolume * (_sampleCount * frac) + Math.Abs(sample * frac);
-                _sampleCount++;
-            }
-        }
-
-        private void ApplyVolume(byte[] buffer, int offset, int count)
+        private void ApplyVolume(byte[] buffer, int offset, int count, float avgVolume)
         {
             float targetAvgVolume = 1 << 13;
             float minAvgMult = 0.1f;
-            float blockVolumeMult = 1.0f / Math.Max(minAvgMult, _avgVolume / targetAvgVolume);
+            float blockVolumeMult = 1.0f / Math.Max(minAvgMult, avgVolume / targetAvgVolume);
 
-            int initSampleCount = 48100 * 5 * _channelCount;
-            float power = Math.Max(0.0f, (initSampleCount - _sampleCount) / (float)initSampleCount);
-            blockVolumeMult = 1.0f * power + blockVolumeMult * (1.0f - power);
+            float power = Math.Max(0.0f, _initSampleCount / (float)INIT_SAMPLE_COUNT);
+            blockVolumeMult = 1.0f * (1.0f - power) + blockVolumeMult * power;
             blockVolumeMult *= _volume;
 
             int minSample = short.MinValue;

@@ -3,6 +3,7 @@ using Discord;
 using Discord.Audio;
 using Discord.WebSocket;
 using DiscordMusicBot.Services.Discord;
+using DiscordMusicBot.Services.Discord.Volume;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -121,7 +122,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             // TODO try load average volume 
             using (pcmStream)
-            using (var output = new VolumeStream(pcmStream, null))
+            using (var output = new VolumeStream(new AverageVolumeBalancer(), null, pcmStream))
             {
                 using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
