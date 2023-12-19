@@ -113,34 +113,27 @@ namespace DiscordMusicBot.Services.Youtube
 
         private async Task<long?> TryCopyFromUrlAsync(Stream destination, string url, long position)
         {
-            Stream source = await _httpClient.GetStreamAsync(url);
-            try
+            using (Stream webStream = await _httpClient.GetStreamAsync(url))
+            using (CountingReadonlyStream source = new(webStream))
             {
-                if (position > 0)
+                try
                 {
-                    int bufferSize = 1024 * 1024;
-                    byte[] buffer = new byte[bufferSize];
-                    while (position > 0)
-                    {
-                        int count = (int)Math.Min(bufferSize, position);
-                        await source.ReadAsync(buffer, 0, count);
-                        position -= count;
-                    }
+                    await source.SkipAsync(position);
+                    await source.CopyToAsync(destination);
                 }
-                await source.CopyToAsync(destination);
-            }
-            catch (IOException e) when (e.InnerException is null)
-            {
-                Console.WriteLine($"Channel probably was closed: video was downloaded or skipped");
-            }
-            catch (IOException e) when (e.InnerException is SocketException)
-            {
-                Console.WriteLine($"Could not continue downloading, retrying since {source.Position}");
-                return source.Position;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Could not continue downloading\n{e}");
+                catch (IOException e) when (e.InnerException is null)
+                {
+                    Console.WriteLine($"Channel probably was closed: video was downloaded or skipped");
+                }
+                catch (IOException e) when (e.InnerException is SocketException)
+                {
+                    Console.WriteLine($"Could not continue downloading, retrying since {source.Position}");
+                    return source.Position;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Could not continue downloading\n{e}");
+                }
             }
 
             return null;
