@@ -5,6 +5,7 @@ using DiscordMusicBot;
 using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
+using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Youtube;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ public class Program
 	public async Task MainAsync()
 	{
 		ServiceCollection services = new();
-		Config config = new Config("config.yml", "credentials.yml");
+		Config config = new ConfigBuilder("config.yml", "credentials.yml").Build();
 		services.AddSingleton<IDiscordConfig>(config);
 		services.AddSingleton<IYoutubeConfig>(config);
 		services.AddSingleton<DiscordBot>();
