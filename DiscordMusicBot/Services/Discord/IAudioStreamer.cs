@@ -15,6 +15,8 @@ namespace DiscordMusicBot.AudioRequesting
         record PlaybackEndedArgs(PlaybackEndedStatus Status, Video Video);
         event AsyncEventHandler<PlaybackEndedArgs>? Finished;
 
+        ulong? GuildId { get; set; }
+
         Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds);
 
         Task PauseAsync();

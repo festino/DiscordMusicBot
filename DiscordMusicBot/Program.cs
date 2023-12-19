@@ -7,6 +7,7 @@ using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Youtube;
+using Microsoft.Extensions.DependencyInjection;
 
 public class Program
 {
@@ -14,21 +15,32 @@ public class Program
 
 	public async Task MainAsync()
 	{
+		ServiceCollection services = new();
 		Config config = new Config("config.yml", "credentials.yml");
-		DiscordBot bot = new DiscordBot(config);
-		IAudioDownloader downloader = new YoutubeAudioDownloader();
-		YoutubeDataProvider youtubeDataProvider = new YoutubeDataProvider(config);
-		var executors = new Dictionary<string, Func<RequestQueue, IAudioStreamer, ICommandExecutor>>() {
-			{ "play", (queue, streamer) => new PlayCommandExecutor(queue, youtubeDataProvider) },
-			{ "list", (queue, streamer) => new ListCommandExecutor(queue) },
-			{ "stop", (queue, streamer) => new StopCommandExecutor(queue) },
-			{ "skip", (queue, streamer) => new SkipCommandExecutor(queue) },
-			{ "undo", (queue, streamer) => new UndoCommandExecutor(queue) },
-			{ "now", (queue, streamer) => new NowCommandExecutor(queue, streamer) },
-			{ "help", (queue, streamer) => new HelpCommandExecutor() },
-		};
-		CommandWorker worker = new(executors, downloader, (guildId) => new AudioStreamer(bot, guildId));
-		bot.CommandRecieved += worker.OnCommand;
+		services.AddSingleton<IDiscordConfig>(config);
+		services.AddSingleton<IYoutubeConfig>(config);
+		services.AddSingleton<DiscordBot>();
+		services.AddSingleton<ICommandWorker, CommandWorker>();
+		services.AddSingleton<IAudioDownloader, YoutubeAudioDownloader>();
+		services.AddSingleton<IYoutubeDataProvider, YoutubeDataProvider>();
+
+		services.AddScoped<ICommandExecutor, PlayCommandExecutor>();
+		services.AddScoped<ICommandExecutor, ListCommandExecutor>();
+		services.AddScoped<ICommandExecutor, StopCommandExecutor>();
+		services.AddScoped<ICommandExecutor, SkipCommandExecutor>();
+		services.AddScoped<ICommandExecutor, UndoCommandExecutor>();
+		services.AddScoped<ICommandExecutor, NowCommandExecutor>();
+		services.AddScoped<ICommandExecutor, HelpCommandExecutor>();
+
+		services.AddScoped<IAudioStreamer, AudioStreamer>();
+		services.AddScoped<RequestQueue>();
+
+		ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+		var bot = serviceProvider.GetRequiredService<DiscordBot>();
+		var commandWorker = serviceProvider.GetRequiredService<ICommandWorker>();
+		bot.CommandRecieved += commandWorker.OnCommand;
+
 		await bot.RunAsync();
 	}
 }

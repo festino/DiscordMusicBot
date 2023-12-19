@@ -19,7 +19,7 @@ namespace DiscordMusicBot.AudioRequesting
         private const int RETRY_DELAY_MS = 500;
 
         private readonly DiscordSocketClient _client;
-        private readonly ulong _guildId;
+        private ulong? _guildId;
         private IAudioClient? _audioClient = null;
 
         private CancellationTokenSource _cancellationTokenSource = new();
@@ -30,10 +30,16 @@ namespace DiscordMusicBot.AudioRequesting
 
         public event AsyncEventHandler<PlaybackEndedArgs>? Finished;
 
-        public AudioStreamer(DiscordBot bot, ulong guildId)
+        // dependency injection skill issue
+        public ulong? GuildId
+        {
+            get => _guildId;
+            set => _guildId = value;
+        }
+
+        public AudioStreamer(DiscordBot bot)
         {
             _client = bot.Client;
-            _guildId = guildId;
         }
 
         public AudioInfo? GetCurrentTime()
@@ -147,7 +153,10 @@ namespace DiscordMusicBot.AudioRequesting
 
         private Tuple<IVoiceChannel, IGuildUser>? FindChannel(ulong[] requesterIds)
         {
-            var guild = _client.GetGuild(_guildId);
+            if (_guildId is null)
+                throw new InvalidOperationException("Guild id is not initialized!");
+
+            var guild = _client.GetGuild((ulong)_guildId);
             foreach (ulong requesterId in requesterIds)
             {
                 IGuildUser? user = guild.GetUser(requesterId);

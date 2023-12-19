@@ -1,7 +1,9 @@
 ﻿using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Commands;
+using DiscordMusicBot.Commands.Executors;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Youtube;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,40 +15,29 @@ namespace DiscordMusicBot
     public class CommandWorker : ICommandWorker
     {
         private readonly bool REPLY_UNKNOWN_COMMAND = false;
-        private readonly Dictionary<string, Func<RequestQueue, IAudioStreamer, ICommandExecutor>> executorConstructors = new();
-        private readonly Dictionary<ulong, Dictionary<string, ICommandExecutor>> executors = new();
-
-        private readonly IAudioDownloader _downloader;
-        private readonly Func<ulong, IAudioStreamer> _streamerConstructor;
-
-        public CommandWorker(
-            Dictionary<string, Func<RequestQueue, IAudioStreamer, ICommandExecutor>> executorConstructors,
-            IAudioDownloader downloader,
-            Func<ulong, IAudioStreamer> streamerConstructor)
+        private readonly Dictionary<Type, string> ExecutorsCommands = new()
         {
-            _downloader = downloader;
-            _streamerConstructor = streamerConstructor;
-            foreach (var executor in executorConstructors)
-                this.executorConstructors.Add(executor.Key.ToLower(), executor.Value);
+            { typeof(PlayCommandExecutor), "play" },
+            { typeof(ListCommandExecutor), "list" },
+            { typeof(StopCommandExecutor), "stop" },
+            { typeof(SkipCommandExecutor), "skip" },
+            { typeof(UndoCommandExecutor), "undo" },
+            { typeof(NowCommandExecutor), "now" },
+            { typeof(HelpCommandExecutor), "help" },
+        };
+
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        private readonly Dictionary<ulong, Dictionary<string, ICommandExecutor>> _executors = new();
+
+        public CommandWorker(IServiceScopeFactory scopeFactory)
+        {
+            _scopeFactory = scopeFactory;
         }
 
         public async Task<CommandResponse> OnCommand(string command, string args, DiscordMessageInfo discordMessageInfo)
         {
-            Dictionary<string, ICommandExecutor> guildExecutors;
-            if (executors.ContainsKey(discordMessageInfo.GuildId))
-            {
-                guildExecutors = executors[discordMessageInfo.GuildId];
-            }
-            else
-            {
-                guildExecutors = new();
-                IAudioStreamer streamer = _streamerConstructor(discordMessageInfo.GuildId);
-                RequestQueue guildQueue = new(_downloader, streamer);
-                foreach (var executorConstructor in executorConstructors)
-                    guildExecutors.Add(executorConstructor.Key, executorConstructor.Value(guildQueue, streamer));
-
-                executors.Add(discordMessageInfo.GuildId, guildExecutors);
-            }
+            Dictionary<string, ICommandExecutor> guildExecutors = GetGuildExecutors(discordMessageInfo.GuildId);
 
             command = command.ToLower();
             if (guildExecutors.ContainsKey(command))
@@ -56,6 +47,26 @@ namespace DiscordMusicBot
                 return new CommandResponse(CommandResponseStatus.ERROR, "unknown command");
 
             return new CommandResponse(CommandResponseStatus.OK, "");
+        }
+
+        private Dictionary<string, ICommandExecutor> GetGuildExecutors(ulong guildId)
+        {
+            if (_executors.ContainsKey(guildId))
+            {
+                return _executors[guildId];
+            }
+
+            Dictionary<string, ICommandExecutor>  guildExecutors = new();
+            IServiceProvider services = _scopeFactory.CreateScope().ServiceProvider;
+            // cannot add guild id to the scope context
+            services.GetRequiredService<IAudioStreamer>().GuildId = guildId;
+            foreach (var executor in services.GetServices<ICommandExecutor>())
+            {
+                guildExecutors.Add(ExecutorsCommands[executor.GetType()], executor);
+            }
+
+            _executors.Add(guildId, guildExecutors);
+            return guildExecutors;
         }
     }
 }
