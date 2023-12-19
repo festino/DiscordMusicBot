@@ -33,6 +33,7 @@ namespace DiscordMusicBot
         public CommandWorker(IServiceScopeFactory scopeFactory)
         {
             _scopeFactory = scopeFactory;
+            ValidateCommands();
         }
 
         public async Task<CommandResponse> OnCommand(string command, string args, DiscordMessageInfo discordMessageInfo)
@@ -67,6 +68,24 @@ namespace DiscordMusicBot
 
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;
+        }
+
+        private void ValidateCommands()
+        {
+            Dictionary<string, Type> commandsExecutors = new();
+            foreach ((Type type, string command) in ExecutorsCommands.AsEnumerable())
+            {
+                if (command.Length == 0)
+                    throw new Exception($"Command cannot be empty: {type}");
+
+                if (command.Contains(' '))
+                    throw new Exception($"Command cannot contain ' ': \"{command}\" of {type}");
+
+                if (commandsExecutors.ContainsKey(command))
+                    throw new Exception($"Duplicating {commandsExecutors[command]} command: \"{command}\" of {type}");
+
+                commandsExecutors.Add(command, type);
+            }
         }
     }
 }
