@@ -1,6 +1,7 @@
 ﻿using AsyncEvent;
 using DiscordMusicBot.AudioRequesting;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Net.Sockets;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
 
@@ -113,12 +114,12 @@ namespace DiscordMusicBot.Services.Youtube
 
         private async Task<long?> TryCopyFromUrlAsync(Stream destination, string url, long position)
         {
+            _httpClient.DefaultRequestHeaders.Range = new RangeHeaderValue(position, null);
             using (Stream webStream = await _httpClient.GetStreamAsync(url))
-            using (CountingReadonlyStream source = new(webStream))
+            using (CountingReadonlyStream source = new(webStream, position))
             {
                 try
                 {
-                    await source.SkipAsync(position);
                     await source.CopyToAsync(destination);
                 }
                 catch (IOException e) when (e.InnerException is null)

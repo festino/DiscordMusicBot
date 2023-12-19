@@ -10,7 +10,7 @@ namespace DiscordMusicBot.Services.Youtube
     {
         private readonly Stream _source;
 
-        private int _count = 0;
+        private long _count;
 
         public override bool CanRead => true;
         public override bool CanSeek => false;
@@ -19,9 +19,10 @@ namespace DiscordMusicBot.Services.Youtube
         public override long Length => throw new NotImplementedException();
         public override long Position { get => _count; set => throw new NotImplementedException(); }
 
-        public CountingReadonlyStream(Stream source)
+        public CountingReadonlyStream(Stream source, long startPosition)
         {
             _source = source;
+            _count = startPosition;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
