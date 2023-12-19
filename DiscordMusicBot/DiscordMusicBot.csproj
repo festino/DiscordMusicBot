@@ -13,6 +13,7 @@
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.64.0.3205" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
+    <PackageReference Include="YamlDotNet" Version="13.7.1" />
   </ItemGroup>
 
 </Project>
