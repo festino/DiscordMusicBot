@@ -20,8 +20,8 @@ namespace DiscordMusicBot.Services.Youtube
         public YoutubeAudioDownloader()
         {
             _httpClient = new HttpClient();
-            //_httpClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
-            //_httpClient.DefaultRequestHeaders.Add("Keep-Alive", "3600");
+            _httpClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
+            _httpClient.DefaultRequestHeaders.Add("Keep-Alive", "3600");
         }
 
         public void RequestDownload(string youtubeId, bool notify)
