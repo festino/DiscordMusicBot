@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using DiscordMusicBot.AudioRequesting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace DiscordMusicBot.Services.Discord
     {
         private const int MAX_MESSAGE_LENGTH = 2000;
 
+        private readonly ILogger _logger;
+
         private readonly string _commandPrefix;
         private readonly DiscordSocketClient _client;
         private readonly string _token;
@@ -23,7 +26,7 @@ namespace DiscordMusicBot.Services.Discord
 
         public DiscordSocketClient Client => _client;
 
-        public DiscordBot(IDiscordConfig config)
+        public DiscordBot(ILogger<DiscordBot> logger, IDiscordConfig config)
         {
             var socketConfig = new DiscordSocketConfig();
             socketConfig.GatewayIntents |= GatewayIntents.MessageContent;
@@ -32,6 +35,7 @@ namespace DiscordMusicBot.Services.Discord
             _client.MessageReceived += HandleCommandAsync;
             _token = config.DiscordToken;
             _commandPrefix = config.CommandPrefix;
+            _logger = logger;
         }
 
         public async Task RunAsync()
@@ -43,7 +47,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private Task Log(LogMessage msg)
         {
-            Console.WriteLine(msg.ToString());
+            _logger.LogInformation("{Message}", msg.ToString());
             return Task.CompletedTask;
         }
 
@@ -54,7 +58,7 @@ namespace DiscordMusicBot.Services.Discord
 
             // Don't process the command if it was a system message
             var message = messageParam as SocketUserMessage;
-            if (message == null)
+            if (message is null)
                 return;
 
             string text = message.Content;
@@ -69,7 +73,7 @@ namespace DiscordMusicBot.Services.Discord
             if (guildId is null)
                 return;
 
-            DiscordMessageInfo info = new DiscordMessageInfo(message.Author.Id, (ulong)guildId, message.Channel.Id, message.Id);
+            DiscordMessageInfo info = new(message.Author.Id, (ulong)guildId, message.Channel.Id, message.Id);
             CommandResponse response = await CommandRecieved.Invoke(command, commandMessage, info);
             if (response.Message.Length == 0)
                 return;

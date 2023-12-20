@@ -1,5 +1,6 @@
 ﻿using AsyncEvent;
 using DiscordMusicBot.AudioRequesting;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
@@ -9,6 +10,8 @@ namespace DiscordMusicBot.Services.Youtube
 {
     public class YoutubeAudioDownloader : IAudioDownloader
     {
+        private readonly ILogger _logger;
+
         private readonly HttpClient _httpClient;
 
         private readonly List<string> _downloadingIds = new();
@@ -17,8 +20,9 @@ namespace DiscordMusicBot.Services.Youtube
         public event AsyncEventHandler<LoadCompletedArgs>? LoadCompleted;
         public event AsyncEventHandler<LoadFailedArgs>? LoadFailed;
 
-        public YoutubeAudioDownloader()
+        public YoutubeAudioDownloader(ILogger<YoutubeAudioDownloader> logger)
         {
+            _logger = logger;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
             _httpClient.DefaultRequestHeaders.Add("Keep-Alive", "3600");
@@ -69,7 +73,7 @@ namespace DiscordMusicBot.Services.Youtube
                 return null;
 
             await process.WaitForExitAsync();
-            Console.WriteLine($"Downloaded {youtubeId}");
+            _logger.LogDebug("Downloaded {YoutubeId}", youtubeId);
             return !File.Exists(path) ? null : path;
         }
 
@@ -124,16 +128,16 @@ namespace DiscordMusicBot.Services.Youtube
                 }
                 catch (IOException e) when (e.InnerException is null)
                 {
-                    Console.WriteLine($"Channel probably was closed: video was downloaded or skipped");
+                    _logger.LogDebug("Channel probably was closed: video was downloaded or skipped");
                 }
                 catch (IOException e) when (e.InnerException is SocketException)
                 {
-                    Console.WriteLine($"Could not continue downloading, retrying since {source.Position}");
+                    _logger.LogDebug("Could not continue downloading, retrying since {Position}", source.Position);
                     return source.Position;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Could not continue downloading\n{e}");
+                    _logger.LogError("Could not continue downloading\n{Exception}", e);
                 }
             }
 
