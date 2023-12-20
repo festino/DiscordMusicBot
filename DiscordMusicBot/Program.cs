@@ -9,6 +9,7 @@ using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Youtube;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 public class Program
 {
@@ -16,7 +17,7 @@ public class Program
 
 	public async Task MainAsync()
 	{
-		ConfigReader reader = new ConfigReader(
+		ConfigReader reader = new(
 			new YamlConfigParser(),
 			new FileConfigStream("config.yml"),
 			new FileConfigStream("credentials.yml")
@@ -24,6 +25,7 @@ public class Program
 		Config config = new ConfigBuilder(reader).Build();
 
 		ServiceCollection services = new();
+		services.AddLogging(builder => builder.AddConsole());
 		services.AddSingleton<IDiscordConfig>(config);
 		services.AddSingleton<IYoutubeConfig>(config);
 		services.AddSingleton<DiscordBot>();
