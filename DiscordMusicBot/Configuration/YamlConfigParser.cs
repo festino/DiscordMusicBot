@@ -30,7 +30,10 @@ namespace DiscordMusicBot.Configuration
                 if (v is null)
                 {
                     isTextEdited = true;
-                    text += $"\n{property.Key}: {property.DefaultValue}";
+                    if (text.Length > 0 && text[^1] == '\n')
+                        text += '\n';
+
+                    text += $"{property.Key}: {property.DefaultValue}";
                 }
             }
 
