@@ -20,7 +20,7 @@ namespace DiscordMusicBot.Configuration
             if (!File.Exists(_path))
             {
                 Console.WriteLine("Configuration file did not exist: " + Path.GetFullPath(_path));
-                File.CreateText(_path);
+                File.CreateText(_path).Close();
                 return "";
             }
 
