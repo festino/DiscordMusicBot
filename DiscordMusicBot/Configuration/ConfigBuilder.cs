@@ -27,11 +27,13 @@ namespace DiscordMusicBot.Configuration
                 },
                 {
                     ConfigPropertyName.DiscordToken,
-                    new ConfigProperty("discord-token", "ENTER-Y0UR-T0KEN-HERE.AzNA.G6SEGD.UDtpQJwJq9pRvoZvRRDJCF-hEpBT2yuvhJFuh4")
+                    new ConfigProperty("discord-token",
+                        "ENTER-Y0UR-T0KEN-HERE.AzNA.G6SEGD.UDtpQJwJq9pRvoZvRRDJCF-hEpBT2yuvhJFuh4", false)
                 },
                 {
                     ConfigPropertyName.YoutubeToken,
-                    new ConfigProperty("youtube-token", "YourToken_5AqzV6B44r9CfU3cn2KBbZZkaDf9k")
+                    new ConfigProperty("youtube-token",
+                        "YourToken_5AqzV6B44r9CfU3cn2KBbZZkaDf9k", false)
                 },
             };
 
