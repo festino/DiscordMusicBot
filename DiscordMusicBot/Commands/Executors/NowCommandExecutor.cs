@@ -43,7 +43,7 @@ namespace DiscordMusicBot.Commands.Executors
                 string formatStr = fullTime.TotalHours >= 1.0 ? @"hh\:mm\:ss" : @"mm\:ss";
                 string currentTimeStr = currentTime.ToString(formatStr);
                 string fullTimeStr = fullTime.ToString(formatStr);
-                message += "\n" + videos[0].Header.Title + $" ({currentTimeStr} / {fullTimeStr})";
+                message += $"\n{videos[0].Header.Title} ({currentTimeStr} / {fullTimeStr})";
 
                 for (int i = 1; i < Math.Min(videos.Count, 2); i++)
                 {
