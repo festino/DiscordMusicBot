@@ -10,6 +10,7 @@ using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Youtube;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 public class Program
 {
@@ -24,8 +25,15 @@ public class Program
 		);
 		Config config = new ConfigBuilder(reader).Build();
 
+		Serilog.ILogger fileLogger = new LoggerConfiguration()
+			.WriteTo.File("./logs/log.txt", rollingInterval: RollingInterval.Day)
+			.CreateLogger();
+
 		ServiceCollection services = new();
-		services.AddLogging(builder => builder.AddConsole());
+		services.AddLogging(builder => {
+			builder.AddConsole();
+			builder.AddSerilog(fileLogger, dispose: true);
+		});
 		services.AddSingleton<IDiscordConfig>(config);
 		services.AddSingleton<IYoutubeConfig>(config);
 		services.AddSingleton<DiscordBot>();
