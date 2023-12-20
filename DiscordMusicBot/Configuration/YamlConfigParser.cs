@@ -11,6 +11,9 @@ namespace DiscordMusicBot.Configuration
 {
     public class YamlConfigParser : IConfigParser
     {
+        private readonly ISerializer _serializer = new SerializerBuilder()
+                            .WithNamingConvention(HyphenatedNamingConvention.Instance)
+                            .Build();
         private readonly IDeserializer _deserializer = new DeserializerBuilder()
                             .WithNamingConvention(HyphenatedNamingConvention.Instance)
                             .Build();
@@ -20,26 +23,30 @@ namespace DiscordMusicBot.Configuration
             string text = configStream.Read();
             dynamic content = _deserializer.Deserialize<ExpandoObject>(text) ?? new ExpandoObject();
 
-            // TODO test if broken format
-
-            bool isTextEdited = false;
+            List<ConfigProperty> missingProperties = new();
             foreach (ConfigProperty property in properties)
             {
                 string v = TryGetString(content, property.Key);
                 property.Value = v;
                 if (v is null)
                 {
-                    isTextEdited = true;
-                    if (text.Length > 0 && text[^1] == '\n')
-                        text += '\n';
-
-                    text += $"{property.Key}: {property.DefaultValue}";
+                    property.Value = property.DefaultValue;
+                    missingProperties.Add(property);
                 }
             }
 
-            if (isTextEdited)
+            if (missingProperties.Count > 0)
             {
-                configStream.Rewrite(text);
+                Dictionary<string, string> missingPairs = new();
+                foreach (ConfigProperty property in missingProperties)
+                {
+                    missingPairs.Add(property.Key, property.DefaultValue);
+                }
+
+                if (text.Length > 0 && text[^1] != '\n')
+                    text += '\n';
+
+                configStream.Rewrite(text + _serializer.Serialize(missingPairs));
             }
         }
 
