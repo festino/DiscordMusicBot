@@ -16,8 +16,14 @@ public class Program
 
 	public async Task MainAsync()
 	{
+		ConfigReader reader = new ConfigReader(
+			new YamlConfigParser(),
+			new FileConfigStream("config.yml"),
+			new FileConfigStream("credentials.yml")
+		);
+		Config config = new ConfigBuilder(reader).Build();
+
 		ServiceCollection services = new();
-		Config config = new ConfigBuilder("config.yml", "credentials.yml").Build();
 		services.AddSingleton<IDiscordConfig>(config);
 		services.AddSingleton<IYoutubeConfig>(config);
 		services.AddSingleton<DiscordBot>();

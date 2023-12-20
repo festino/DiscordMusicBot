@@ -1,87 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace DiscordMusicBot.Configuration
 {
     public class ConfigBuilder
     {
-        private readonly IDeserializer _deserializer = new DeserializerBuilder()
-                            .WithNamingConvention(HyphenatedNamingConvention.Instance)
-                            .Build();
+        private enum ConfigPropertyName { CommandPrefix, DiscordToken, YoutubeToken }
 
-        private readonly string _configPath;
-        private readonly string _credentialsPath;
+        private readonly IConfigReader _reader;
 
-        public ConfigBuilder(string configPath, string credentialsPath)
+        public ConfigBuilder(IConfigReader reader)
         {
-            _configPath = configPath;
-            _credentialsPath = credentialsPath;
+            _reader = reader;
         }
 
         public Config Build()
         {
-            if (!File.Exists(_configPath))
+            Dictionary<ConfigPropertyName, ConfigProperty> properties = new()
             {
-                Console.WriteLine("Configuration file did not exist: " + Path.GetFullPath(_configPath));
-                // TODO log
-                // TODO create file
-                throw new FileNotFoundException("", _configPath);
+                {
+                    ConfigPropertyName.CommandPrefix,
+                    new ConfigProperty("command-prefix", "!")
+                },
+                {
+                    ConfigPropertyName.DiscordToken,
+                    new ConfigProperty("discord-token", "ENTER-Y0UR-T0KEN-HERE.AzNA.G6SEGD.UDtpQJwJq9pRvoZvRRDJCF-hEpBT2yuvhJFuh4")
+                },
+                {
+                    ConfigPropertyName.YoutubeToken,
+                    new ConfigProperty("youtube-token", "YourToken_5AqzV6B44r9CfU3cn2KBbZZkaDf9k")
+                },
+            };
+
+            _reader.Read(properties.Values.ToList());
+
+            Dictionary<ConfigPropertyName, string> propertyValues = new();
+            string errorMessage = "";
+            foreach ((ConfigPropertyName name, ConfigProperty property) in properties)
+            {
+                if (property.Value is null)
+                {
+                    errorMessage += $"Property \"{property.Key}\" is not set";
+                    if (!property.AllowDefault)
+                        errorMessage += $" or has the dafault value \"{property.DefaultValue}\"";
+
+                    errorMessage += "\n";
+                    continue;
+                }
+
+                propertyValues.Add(name, property.Value);
             }
 
-            if (!File.Exists(_credentialsPath))
+            if (errorMessage.Length > 0)
             {
-                Console.WriteLine("Credentials file did not exist: " + Path.GetFullPath(_credentialsPath));
-                // TODO log
-                // TODO create and fill file
-                throw new FileNotFoundException("", _credentialsPath);
+                Console.WriteLine(errorMessage);
+                throw new ArgumentException(errorMessage);
             }
 
-            string? commandPrefix = null;
-            string? discordToken = null;
-            string? youtubeToken = null;
-
-            dynamic configContent = _deserializer.Deserialize<ExpandoObject>(File.ReadAllText(_configPath));
-            if (configContent is not null)
-            {
-                commandPrefix = TryGetString(configContent, "command-prefix");
-            }
-
-            dynamic credentialsContent = _deserializer.Deserialize<ExpandoObject>(File.ReadAllText(_credentialsPath));
-            if (credentialsContent is not null)
-            {
-                discordToken = TryGetString(credentialsContent, "discord-token");
-                youtubeToken = TryGetString(credentialsContent, "youtube-token");
-            }
-
-            if (commandPrefix is null || discordToken is null || youtubeToken is null)
-            {
-                // TODO log nice error message
-                throw new ArgumentException("");
-            }
-
-            return new Config(commandPrefix, discordToken, youtubeToken);
-        }
-
-        private static string? TryGetString(dynamic settings, string name)
-        {
-            if (((IDictionary<string, object>)settings).TryGetValue(name, out object? property))
-                return property is string ? (string)property : null;
-
-            return null;
-        }
-
-        private static bool DoesPropertyExist(dynamic settings, string name)
-        {
-            if (settings is ExpandoObject)
-                return ((IDictionary<string, object>)settings).ContainsKey(name);
-
-            return settings.GetType().GetProperty(name) != null;
+            return new Config(
+                CommandPrefix: propertyValues[ConfigPropertyName.CommandPrefix],
+                DiscordToken: propertyValues[ConfigPropertyName.DiscordToken],
+                YoutubeToken: propertyValues[ConfigPropertyName.YoutubeToken]
+            );
         }
     }
 }
