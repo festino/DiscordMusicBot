@@ -27,6 +27,7 @@ public class Program
 
 		const string logTemplate = "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}";
 		Serilog.ILogger fileLogger = new LoggerConfiguration()
+			.MinimumLevel.Debug()
 			.WriteTo.Console(outputTemplate: logTemplate)
 			.WriteTo.File("./logs/log.txt", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate)
 			.CreateLogger();
