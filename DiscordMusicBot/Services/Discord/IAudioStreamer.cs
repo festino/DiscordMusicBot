@@ -12,6 +12,7 @@ namespace DiscordMusicBot.AudioRequesting
         ulong? GuildId { get; set; }
 
         Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds);
+        void RequestLeave();
 
         Task PauseAsync();
         Task ResumeAsync();

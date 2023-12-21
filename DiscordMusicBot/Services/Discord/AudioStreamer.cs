@@ -18,7 +18,9 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly ILogger _logger;
 
         private readonly DiscordSocketClient _client;
-        private ulong? _guildId;
+        private ulong? _guildId = null;
+        private ulong? _channelId = null;
+
         private IAudioClient? _audioClient = null;
         private PlaybackState _state = PlaybackState.NoStream;
 
@@ -47,7 +49,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         public AudioInfo? GetCurrentTime()
         {
-            if (_state == PlaybackState.NoStream)
+            if (_state != PlaybackState.Playing && _state != PlaybackState.Paused)
                 return null;
 
             if (_currentVideo is null || _volumeStream is null)
@@ -58,9 +60,22 @@ namespace DiscordMusicBot.AudioRequesting
 
         public async Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds)
         {
+            if (!_leaveTask.IsCompleted)
+            {
+                _leaveCancellationSource.Cancel();
+                _leaveCancellationSource = new CancellationTokenSource();
+                _leaveTask = Task.CompletedTask;
+            }
+
             CancellationToken cancellationToken = _playCancellationSource.Token;
             await JoinAsync(getRequesterIds, cancellationToken);
             await StartNewAsync(video, pcmStream, cancellationToken);
+        }
+
+        public void RequestLeave()
+        {
+            _state = PlaybackState.ReadyToLeave;
+            _leaveTask = Task.Run(() => LeaveAsync(VoiceChannelTimeoutMs, _leaveCancellationSource.Token));
         }
 
         public async Task PauseAsync()
@@ -86,13 +101,6 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task StartNewAsync(Video video, Stream pcmStream, CancellationToken cancellationToken)
         {
-            if (!_leaveTask.IsCompleted)
-            {
-                _leaveCancellationSource.Cancel();
-                _leaveCancellationSource = new CancellationTokenSource();
-                _leaveTask = Task.CompletedTask;
-            }
-
             _logger.Here().Debug("Starting {YoutubeId}", video.YoutubeId);
             _currentVideo = video;
             _playTask = PlayAudioAsync(pcmStream, cancellationToken);
@@ -107,15 +115,18 @@ namespace DiscordMusicBot.AudioRequesting
             Task? task = Finished?.InvokeAsync(this, new PlaybackEndedArgs(status, video));
             if (task is not null)
                 await task;
-
-            _leaveTask = Task.Run(() => LeaveAsync(VoiceChannelTimeoutMs, _leaveCancellationSource.Token));
         }
 
         private async Task LeaveAsync(int delayMs, CancellationToken cancellationToken)
         {
-            await Task.Delay(delayMs, cancellationToken);
+            if (delayMs > 0)
+            {
+                await Task.Delay(delayMs, cancellationToken);
+            }
             _audioClient?.StopAsync();
             _audioClient = null;
+            _channelId = null;
+            _state = PlaybackState.NoStream;
         }
 
         private async Task PlayAudioAsync(Stream pcmStream, CancellationToken cancellationToken)
@@ -135,7 +146,7 @@ namespace DiscordMusicBot.AudioRequesting
                 if (!cancellationToken.IsCancellationRequested)
                 {
                     _logger.Here().Error("Audio client was disconnected!\n{Exception}", e);
-                    _audioClient = null;
+                    await LeaveAsync(0, CancellationToken.None);
                 }
             }
             _currentVideo = null;
@@ -177,11 +188,12 @@ namespace DiscordMusicBot.AudioRequesting
             }
         }
 
-        private Tuple<IVoiceChannel, IGuildUser>? FindChannel(ulong[] requesterIds)
+        private Tuple<IVoiceChannel, IGuildUser>[] GetChannels(ulong[] requesterIds)
         {
             if (_guildId is null)
                 throw new InvalidOperationException("Guild id is not initialized!");
 
+            List<Tuple<IVoiceChannel, IGuildUser>> channelIds = new();
             var guild = _client.GetGuild((ulong)_guildId);
             foreach (ulong requesterId in requesterIds)
             {
@@ -190,18 +202,22 @@ namespace DiscordMusicBot.AudioRequesting
                     continue;
 
                 IVoiceChannel? channel = user.VoiceChannel;
-                if (channel is not null && channel.GuildId == _guildId)
-                {
-                    return Tuple.Create(channel, user);
-                }
+                if (channel is null || channel.GuildId != _guildId)
+                    continue;
+
+                channelIds.Add(Tuple.Create(channel, user));
             }
 
-            return null;
+            return channelIds.ToArray();
         }
 
         private async Task JoinAsync(Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
         {
-            if (_audioClient is not null && _audioClient.ConnectionState == ConnectionState.Connected)
+            if (_state != PlaybackState.ReadyToLeave && _state != PlaybackState.NoStream)
+                return;
+
+            ulong channelId = _channelId is null ? 0 : (ulong)_channelId;
+            if (GetChannels(getRequesterIds()).Select(t => t.Item1.Id).Contains(channelId))
                 return;
 
             _state = PlaybackState.TryingToJoin;
@@ -217,11 +233,11 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task<IAudioClient?> TryJoinAsync(Func<ulong[]> getRequesterIds)
         {
-            var channelInfo = FindChannel(getRequesterIds());
-            if (channelInfo is null)
+            var channelsInfo = GetChannels(getRequesterIds());
+            if (channelsInfo.Length == 0)
                 return null;
 
-            (IVoiceChannel voiceChannel, IGuildUser voiceUser) = channelInfo;
+            (IVoiceChannel voiceChannel, IGuildUser voiceUser) = channelsInfo[0];
             _audioClient = await voiceChannel.ConnectAsync(true, false);
             if (_audioClient is null)
                 return null;

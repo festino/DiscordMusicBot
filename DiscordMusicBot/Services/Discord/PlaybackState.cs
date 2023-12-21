@@ -4,6 +4,7 @@
     {
         NoStream,
         TryingToJoin,
+        ReadyToLeave,
         Playing,
         Paused
     }
