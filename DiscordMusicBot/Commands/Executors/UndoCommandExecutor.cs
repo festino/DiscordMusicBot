@@ -17,12 +17,12 @@ namespace DiscordMusicBot.Commands.Executors
             Video[]? videos = await _queue.RemoveLastAsync(discordMessageInfo);
 
             if (videos is null)
-                return new CommandResponse(CommandResponseStatus.OK, "could not skip video");
+                return new CommandResponse(CommandResponseStatus.Ok, "could not skip video");
 
             if (videos.Length == 1)
-                return new CommandResponse(CommandResponseStatus.OK, "skip " + videos[0].Header.Title);
+                return new CommandResponse(CommandResponseStatus.Ok, "skip " + videos[0].Header.Title);
 
-            return new CommandResponse(CommandResponseStatus.OK, "skip\n" + string.Join("\n", videos.Select((v) => v.Header.Title)));
+            return new CommandResponse(CommandResponseStatus.Ok, "skip\n" + string.Join("\n", videos.Select((v) => v.Header.Title)));
         }
     }
 }

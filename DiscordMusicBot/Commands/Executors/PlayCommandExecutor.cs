@@ -7,7 +7,7 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class PlayCommandExecutor : ICommandExecutor
     {
-        private readonly int SEARCH_RESULT_COUNT = 3;
+        private readonly int SearchResultCount = 3;
         private readonly RequestQueue _queue;
         private readonly IYoutubeDataProvider _youtubeDataProvider;
 
@@ -21,7 +21,7 @@ namespace DiscordMusicBot.Commands.Executors
         {
             string[] argsStrs = args.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (argsStrs.Length == 0)
-                return new CommandResponse(CommandResponseStatus.ERROR, "no argument");
+                return new CommandResponse(CommandResponseStatus.Error, "no argument");
 
             if (HasLink(args))
                 return await AddVideos(argsStrs, discordMessageInfo);
@@ -32,11 +32,11 @@ namespace DiscordMusicBot.Commands.Executors
         private async Task<CommandResponse> SuggestSearch(string query, DiscordMessageInfo discordMessageInfo)
         {
             Tuple<string, VideoHeader>[] options = await _youtubeDataProvider.Search(query);
-            string[] topOptions = options.Take(SEARCH_RESULT_COUNT).Select(t => t.Item2.Title).ToArray();
+            string[] topOptions = options.Take(SearchResultsCount).Select(t => t.Item2.Title).ToArray();
             if (topOptions.Length == 0)
-                return new CommandResponse(CommandResponseStatus.ERROR, "no search results");
+                return new CommandResponse(CommandResponseStatus.Error, "no search results");
 
-            return new CommandResponse(CommandResponseStatus.SUGGEST, "choose:\n" + string.Join('\n', topOptions));
+            return new CommandResponse(CommandResponseStatus.Suggest, "choose:\n" + string.Join('\n', topOptions));
         }
 
         private async Task<CommandResponse> AddVideos(string[] args, DiscordMessageInfo discordMessageInfo)
@@ -59,7 +59,7 @@ namespace DiscordMusicBot.Commands.Executors
             }
 
             if (badArgs.Count > 0)
-                return new CommandResponse(CommandResponseStatus.ERROR, $"could not get ids: {string.Join(", ", badArgs)}");
+                return new CommandResponse(CommandResponseStatus.Error, $"could not get ids: {string.Join(", ", badArgs)}");
 
             var headersResult = await _youtubeDataProvider.GetHeaders(youtubeIds.ToArray());
             List<string> badIds = new();
@@ -69,19 +69,19 @@ namespace DiscordMusicBot.Commands.Executors
                 var header = headersResult[i];
                 if (header is not null)
                     headers.Add(header);
-                else if (idSources[i] != YoutubeIdSource.PLAYLIST)
+                else if (idSources[i] != YoutubeIdSource.Playlist)
                     badIds.Add(youtubeIds[i]);
             }
 
             if (badIds.Count > 0)
-                return new CommandResponse(CommandResponseStatus.ERROR, $"there are invalid ids: {string.Join(", ", badIds)}");
+                return new CommandResponse(CommandResponseStatus.Error, $"there are invalid ids: {string.Join(", ", badIds)}");
 
             for (int i = 0; i < headers.Count; i++)
             {
                 _queue.Add(new Video(youtubeIds[i], headers[i], discordMessageInfo));
             }
 
-            return new CommandResponse(CommandResponseStatus.OK,
+            return new CommandResponse(CommandResponseStatus.Ok,
                 headers.Count == 1 ? $"added song {headers[0].Title}" : $"added {headers.Count} songs"
             );
         }

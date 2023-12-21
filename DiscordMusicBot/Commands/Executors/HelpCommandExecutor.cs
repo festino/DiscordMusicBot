@@ -7,7 +7,7 @@ namespace DiscordMusicBot.Commands.Executors
 
         public async Task<CommandResponse> Execute(string args, DiscordMessageInfo discordMessageInfo)
         {
-            return new CommandResponse(CommandResponseStatus.OK, "available commands:\n" +
+            return new CommandResponse(CommandResponseStatus.Ok, "available commands:\n" +
                 "help, play, skip, undo, stop, list, now");
         }
     }

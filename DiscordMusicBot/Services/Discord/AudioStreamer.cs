@@ -12,15 +12,15 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public class AudioStreamer : IAudioStreamer
     {
-        private const int RETRY_DELAY_MS = 500;
-        private const int VOICE_CHANNEL_TIMEOUT_MS = 5 * 60 * 1000;
+        private const int RetryDelayMs = 500;
+        private const int VoiceChannelTimeoutMs = 5 * 60 * 1000;
 
         private readonly ILogger _logger;
 
         private readonly DiscordSocketClient _client;
         private ulong? _guildId;
         private IAudioClient? _audioClient = null;
-        private PlaybackState _state = PlaybackState.NO_STREAM;
+        private PlaybackState _state = PlaybackState.NoStream;
 
         private CancellationTokenSource _playCancellationSource = new();
         private Task _playTask = Task.CompletedTask;
@@ -47,7 +47,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         public AudioInfo? GetCurrentTime()
         {
-            if (_state == PlaybackState.NO_STREAM)
+            if (_state == PlaybackState.NoStream)
                 return null;
 
             if (_currentVideo is null || _volumeStream is null)
@@ -99,16 +99,16 @@ namespace DiscordMusicBot.AudioRequesting
             await _playTask;
             _logger.Here().Debug("Finished {YoutubeId}", video.YoutubeId);
 
-            PlaybackEndedStatus status = PlaybackEndedStatus.OK;
+            PlaybackEndedStatus status = PlaybackEndedStatus.Ok;
             if (cancellationToken.IsCancellationRequested)
-                status = PlaybackEndedStatus.STOPPED;
+                status = PlaybackEndedStatus.Stopped;
             if (_audioClient is null)
-                status = PlaybackEndedStatus.DISCONNECTED;
+                status = PlaybackEndedStatus.Disconnected;
             Task? task = Finished?.InvokeAsync(this, new PlaybackEndedArgs(status, video));
             if (task is not null)
                 await task;
 
-            _leaveTask = Task.Run(() => LeaveAsync(VOICE_CHANNEL_TIMEOUT_MS, _leaveCancellationSource.Token));
+            _leaveTask = Task.Run(() => LeaveAsync(VoiceChannelTimeoutMs, _leaveCancellationSource.Token));
         }
 
         private async Task LeaveAsync(int delayMs, CancellationToken cancellationToken)
@@ -139,7 +139,7 @@ namespace DiscordMusicBot.AudioRequesting
                 }
             }
             _currentVideo = null;
-            _state = PlaybackState.NO_STREAM;
+            _state = PlaybackState.NoStream;
         }
 
         private async Task PlayAsync(IAudioClient audioClient, Stream pcmStream, CancellationToken cancellationToken)
@@ -150,7 +150,7 @@ namespace DiscordMusicBot.AudioRequesting
             {
                 using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
-                    _state = PlaybackState.PLAYING;
+                    _state = PlaybackState.Playing;
                     bool isCancelled = false;
                     try
                     {
@@ -204,14 +204,14 @@ namespace DiscordMusicBot.AudioRequesting
             if (_audioClient is not null && _audioClient.ConnectionState == ConnectionState.Connected)
                 return;
 
-            _state = PlaybackState.TRYING_TO_JOIN;
+            _state = PlaybackState.TryingToJoin;
             while (!cancellationToken.IsCancellationRequested)
             {
                 _audioClient = await TryJoinAsync(getRequesterIds);
                 if (_audioClient is not null)
                     return;
 
-                await Task.Delay(RETRY_DELAY_MS, CancellationToken.None);
+                await Task.Delay(RetryDelayMs, CancellationToken.None);
             }
         }
 

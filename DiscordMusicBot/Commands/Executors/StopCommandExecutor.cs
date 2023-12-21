@@ -16,9 +16,9 @@ namespace DiscordMusicBot.Commands.Executors
         {
             var list = await _queue.ClearAsync();
             if (list.Count == 0)
-                return new CommandResponse(CommandResponseStatus.OK, "queue is empty");
+                return new CommandResponse(CommandResponseStatus.Ok, "queue is empty");
 
-            return new CommandResponse(CommandResponseStatus.OK, "drop queue\n" + string.Join("\n", list.Select((v) => v.Header.Title)));
+            return new CommandResponse(CommandResponseStatus.Ok, "drop queue\n" + string.Join("\n", list.Select((v) => v.Header.Title)));
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public enum YoutubeIdSource
     {
-        DIRECT_LINKS,
-        PLAYLIST
+        DirectLinks,
+        Playlist
     }
 }

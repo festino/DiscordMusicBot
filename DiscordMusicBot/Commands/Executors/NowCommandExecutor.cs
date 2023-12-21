@@ -46,7 +46,7 @@ namespace DiscordMusicBot.Commands.Executors
                 }
             }
 
-            return new CommandResponse(CommandResponseStatus.OK, message);
+            return new CommandResponse(CommandResponseStatus.Ok, message);
         }
     }
 }

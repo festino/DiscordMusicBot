@@ -13,7 +13,7 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly IAudioDownloader _audioDownloader;
         private readonly IAudioStreamer _audioStreamer;
 
-        private readonly int MAX_HISTORY_COUNT = 21;
+        private readonly int MaxHistoryCount = 21;
         private readonly List<Video> _history = new();
         private List<Video> _videos = new();
 
@@ -130,7 +130,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         private void AddToHistory(Video video)
         {
-            if (_history.Count >= MAX_HISTORY_COUNT)
+            if (_history.Count >= MaxHistoryCount)
                 _history.RemoveAt(0);
 
             _history.Add(video);
@@ -144,9 +144,9 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task OnAudioFinishedAsync(object sender, PlaybackEndedArgs args)
         {
-            if (args.Status == PlaybackEndedStatus.STOPPED) return;
+            if (args.Status == PlaybackEndedStatus.Stopped) return;
 
-            if (args.Status == PlaybackEndedStatus.DISCONNECTED)
+            if (args.Status == PlaybackEndedStatus.Disconnected)
             {
                 await ClearAsync();
                 return;

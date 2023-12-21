@@ -10,7 +10,7 @@ namespace DiscordMusicBot
 {
     public class CommandWorker : ICommandWorker
     {
-        private readonly bool REPLY_UNKNOWN_COMMAND = false;
+        private readonly bool ReplyUnknownCommand = false;
         private readonly Dictionary<Type, string> ExecutorsCommands = new()
         {
             { typeof(PlayCommandExecutor), "play" },
@@ -43,10 +43,10 @@ namespace DiscordMusicBot
             if (guildExecutors.ContainsKey(command))
                 return await guildExecutors[command].Execute(args, discordMessageInfo);
 
-            if (REPLY_UNKNOWN_COMMAND)
-                return new CommandResponse(CommandResponseStatus.ERROR, "unknown command");
+            if (ReplyUnknownCommand)
+                return new CommandResponse(CommandResponseStatus.Error, "unknown command");
 
-            return new CommandResponse(CommandResponseStatus.OK, "");
+            return new CommandResponse(CommandResponseStatus.Ok, "");
         }
 
         private Dictionary<string, ICommandExecutor> GetGuildExecutors(ulong guildId)

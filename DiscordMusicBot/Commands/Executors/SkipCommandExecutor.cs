@@ -17,9 +17,9 @@ namespace DiscordMusicBot.Commands.Executors
             Video? video = await _queue.RemoveCurrentAsync();
 
             if (video is null)
-                return new CommandResponse(CommandResponseStatus.OK, "could not skip video");
+                return new CommandResponse(CommandResponseStatus.Ok, "could not skip video");
 
-            return new CommandResponse(CommandResponseStatus.OK, "skip " + video.Header.Title);
+            return new CommandResponse(CommandResponseStatus.Ok, "skip " + video.Header.Title);
         }
     }
 }

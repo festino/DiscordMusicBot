@@ -2,9 +2,9 @@
 {
     internal enum PlaybackState
     {
-        NO_STREAM,
-        TRYING_TO_JOIN,
-        PLAYING,
-        PAUSED
+        NoStream,
+        TryingToJoin,
+        Playing,
+        Paused
     }
 }

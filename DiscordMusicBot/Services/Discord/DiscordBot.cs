@@ -7,7 +7,7 @@ namespace DiscordMusicBot.Services.Discord
 {
     public class DiscordBot
     {
-        private const int MAX_MESSAGE_LENGTH = 2000;
+        private const int MaxMessageLength = 2000;
 
         private readonly ILogger _logger;
 
@@ -76,9 +76,9 @@ namespace DiscordMusicBot.Services.Discord
                 return;
 
             string responseMessage = response.Message;
-            if (responseMessage.Length > MAX_MESSAGE_LENGTH)
+            if (responseMessage.Length > MaxMessageLength)
             {
-                responseMessage = responseMessage[..(MAX_MESSAGE_LENGTH - 3)] + "...";
+                responseMessage = responseMessage[..(MaxMessageLength - 3)] + "...";
             }
             await message.Channel.SendMessageAsync(responseMessage);
         }

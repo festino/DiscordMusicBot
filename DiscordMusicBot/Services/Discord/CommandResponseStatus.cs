@@ -2,9 +2,9 @@
 {
     public enum CommandResponseStatus
     {
-        EMPTY,
-        OK,
-        ERROR,
-        SUGGEST
+        Empty,
+        Ok,
+        Error,
+        Suggest
     }
 }

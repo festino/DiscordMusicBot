@@ -7,11 +7,11 @@
 
         private float _volume;
 
-        private const int BYTES_PER_SAMPLE = sizeof(short);
-        private const int CHANNEL_COUNT = 2;
-        private const int SAMPLES_PER_SECOND = 48100 * CHANNEL_COUNT;
-        private const int INIT_SAMPLE_COUNT = 5 * SAMPLES_PER_SECOND;
-        private int _initSampleCount = INIT_SAMPLE_COUNT;
+        private const int BytesPerSample = sizeof(short);
+        private const int ChannelCount = 2;
+        private const int SamplesPerSecond = 48100 * ChannelCount;
+        private const int InitSampleCount = 5 * SamplesPerSecond;
+        private int _initSampleCount = InitSampleCount;
 
         private long _bytesRead = 0;
 
@@ -24,7 +24,7 @@
         public override long Length => throw new NotImplementedException();
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public TimeSpan TimeRead => TimeSpan.FromSeconds(_bytesRead / (double)(BYTES_PER_SAMPLE * SAMPLES_PER_SECOND));
+        public TimeSpan TimeRead => TimeSpan.FromSeconds(_bytesRead / (double)(BytesPerSample * SamplesPerSecond));
 
         public VolumeStream(IVolumeBalancer volumeBalancer, float? averageVolume, Stream source)
         {
@@ -45,7 +45,7 @@
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (count % BYTES_PER_SAMPLE != 0)
+            if (count % BytesPerSample != 0)
                 throw new InvalidOperationException($"{nameof(VolumeStream)} was expecting 16-bit numbers");
 
             int copyCount = await _source.ReadAsync(buffer, offset, count, cancellationToken);
@@ -91,13 +91,13 @@
             float minAvgMult = 0.1f;
             float blockVolumeMult = 1.0f / Math.Max(minAvgMult, avgVolume / targetAvgVolume);
 
-            float power = Math.Max(0.0f, _initSampleCount / (float)INIT_SAMPLE_COUNT);
+            float power = Math.Max(0.0f, _initSampleCount / (float)InitSampleCount);
             blockVolumeMult = 1.0f * (1.0f - power) + blockVolumeMult * power;
             blockVolumeMult *= _volume;
 
             int minSample = short.MinValue;
             int maxSample = short.MaxValue;
-            for (int i = offset; i < offset + count; i += BYTES_PER_SAMPLE)
+            for (int i = offset; i < offset + count; i += BytesPerSample)
             {
                 short sample = (short)(buffer[i] | buffer[i + 1] << 8);
                 int v = (int)(sample * blockVolumeMult);

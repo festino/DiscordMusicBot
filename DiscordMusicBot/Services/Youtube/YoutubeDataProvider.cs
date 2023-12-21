@@ -8,7 +8,7 @@ namespace DiscordMusicBot.Services.Youtube
 {
     public class YoutubeDataProvider : IYoutubeDataProvider
     {
-        private readonly int MAX_RESULTS = 50;
+        private const int MaxResults = 50;
         private readonly YouTubeService _youtubeService;
 
         public YoutubeDataProvider(IYoutubeConfig config)
@@ -24,7 +24,7 @@ namespace DiscordMusicBot.Services.Youtube
         {
             var searchListRequest = _youtubeService.Search.List("snippet");
             searchListRequest.Q = query;
-            searchListRequest.MaxResults = MAX_RESULTS;
+            searchListRequest.MaxResults = MaxResults;
 
             List<Tuple<string, VideoHeader>> result = new();
             var searchListResponse = await searchListRequest.ExecuteAsync();
@@ -51,11 +51,11 @@ namespace DiscordMusicBot.Services.Youtube
                 if (ids is null)
                     return null;
 
-                return new YoutubeIdsResult(YoutubeIdSource.PLAYLIST, ids);
+                return new YoutubeIdsResult(YoutubeIdSource.Playlist, ids);
             }
 
             // TODO suggest video, list and list from position if videoId and listId
-            return new YoutubeIdsResult(YoutubeIdSource.DIRECT_LINKS, new string[] { videoId });
+            return new YoutubeIdsResult(YoutubeIdSource.DirectLinks, new string[] { videoId });
         }
 
         public async Task<VideoHeader?[]> GetHeaders(string[] youtubeIds)
@@ -71,11 +71,11 @@ namespace DiscordMusicBot.Services.Youtube
             }
 
             List<Task<VideoListResponse>> tasks = new();
-            foreach (var chunk in youtubeIds.Chunk(MAX_RESULTS))
+            foreach (var chunk in youtubeIds.Chunk(MaxResults))
             {
                 var videoListRequest = _youtubeService.Videos.List("snippet, contentDetails");
                 videoListRequest.Id = string.Join(",", chunk);
-                videoListRequest.MaxResults = MAX_RESULTS;
+                videoListRequest.MaxResults = MaxResults;
                 tasks.Add(videoListRequest.ExecuteAsync());
             }
             var taskResults = await Task.WhenAll(tasks.ToArray());
@@ -105,7 +105,7 @@ namespace DiscordMusicBot.Services.Youtube
             {
                 var playlistItemsListRequest = _youtubeService.PlaylistItems.List("snippet");
                 playlistItemsListRequest.PlaylistId = playlistId;
-                playlistItemsListRequest.MaxResults = MAX_RESULTS;
+                playlistItemsListRequest.MaxResults = MaxResults;
                 playlistItemsListRequest.PageToken = nextPageToken;
 
                 var playlistItemsListResponse = await playlistItemsListRequest.ExecuteAsync();

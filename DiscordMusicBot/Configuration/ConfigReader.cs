@@ -2,7 +2,7 @@
 {
     public class ConfigReader : IConfigReader
     {
-        private const string CREDENTIALS_SIGN = "token";
+        private const string CredentialsSign = "token";
 
         private readonly IConfigParser _parser;
 
@@ -19,10 +19,10 @@
         public void Read(List<ConfigProperty> properties)
         {
             var mainProperties = properties
-                .Where(p => !p.Key.Contains(CREDENTIALS_SIGN))
+                .Where(p => !p.Key.Contains(CredentialsSign))
                 .ToList();
             var credentialProperties = properties
-                .Where(p => p.Key.Contains(CREDENTIALS_SIGN))
+                .Where(p => p.Key.Contains(CredentialsSign))
                 .ToList();
 
             _parser.Parse(_mainStream, mainProperties);
