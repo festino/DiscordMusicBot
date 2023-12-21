@@ -95,6 +95,12 @@ namespace DiscordMusicBot.AudioRequesting
             if (index == 0)
                 await _audioStreamer.StopAsync();
 
+            if (_videos.Count == 0)
+            {
+                // TODO write message AFTER skip message
+                _audioStreamer.RequestLeave();
+            }
+
             TryRequestDownload(index);
             return video;
         }
