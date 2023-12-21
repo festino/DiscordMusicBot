@@ -44,7 +44,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private Task Log(LogMessage msg)
         {
-            _logger.Here().Information("{Message}", msg.ToString());
+            _logger.Here().Information("{Source}\t{Message}", msg.Source, msg.Message);
             return Task.CompletedTask;
         }
 
