@@ -32,7 +32,7 @@ namespace DiscordMusicBot.Commands.Executors
         private async Task<CommandResponse> SuggestSearch(string query, DiscordMessageInfo discordMessageInfo)
         {
             Tuple<string, VideoHeader>[] options = await _youtubeDataProvider.Search(query);
-            string[] topOptions = options.Take(SearchResultsCount).Select(t => t.Item2.Title).ToArray();
+            string[] topOptions = options.Take(SearchResultCount).Select(t => t.Item2.Title).ToArray();
             if (topOptions.Length == 0)
                 return new CommandResponse(CommandResponseStatus.Error, "no search results");
 
