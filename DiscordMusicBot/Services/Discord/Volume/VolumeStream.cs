@@ -7,10 +7,13 @@
 
         private float _volume;
 
+        private const int BYTES_PER_SAMPLE = sizeof(short);
         private const int CHANNEL_COUNT = 2;
-        private const int SAMPLES_PER_SECOND = 48100;
-        private const int INIT_SAMPLE_COUNT = 5 * SAMPLES_PER_SECOND * CHANNEL_COUNT;
+        private const int SAMPLES_PER_SECOND = 48100 * CHANNEL_COUNT;
+        private const int INIT_SAMPLE_COUNT = 5 * SAMPLES_PER_SECOND;
         private int _initSampleCount = INIT_SAMPLE_COUNT;
+
+        private long _bytesRead = 0;
 
         public float? AverageVolume { get; private set; }
 
@@ -20,6 +23,8 @@
 
         public override long Length => throw new NotImplementedException();
         public override long Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public TimeSpan TimeRead => TimeSpan.FromSeconds(_bytesRead / (double)(BYTES_PER_SAMPLE * SAMPLES_PER_SECOND));
 
         public VolumeStream(IVolumeBalancer volumeBalancer, float? averageVolume, Stream source)
         {
@@ -40,7 +45,7 @@
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (count % 2 != 0)
+            if (count % BYTES_PER_SAMPLE != 0)
                 throw new InvalidOperationException($"{nameof(VolumeStream)} was expecting 16-bit numbers");
 
             int copyCount = await _source.ReadAsync(buffer, offset, count, cancellationToken);
@@ -56,6 +61,7 @@
             }
             ApplyVolume(buffer, offset, copyCount, AverageVolume ?? _volumeBalancer.BlockAverageVolume);
 
+            _bytesRead += copyCount;
             return copyCount;
         }
 
@@ -91,7 +97,7 @@
 
             int minSample = short.MinValue;
             int maxSample = short.MaxValue;
-            for (int i = offset; i < offset + count; i += 2)
+            for (int i = offset; i < offset + count; i += BYTES_PER_SAMPLE)
             {
                 short sample = (short)(buffer[i] | buffer[i + 1] << 8);
                 int v = (int)(sample * blockVolumeMult);
