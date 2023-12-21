@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using DiscordMusicBot.Services.Youtube.Data;
-using Google.Apis.Auth.OAuth2;
+﻿using DiscordMusicBot.Services.Youtube.Data;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
+using System.Xml;
 
 namespace DiscordMusicBot.Services.Youtube
 {
@@ -76,7 +69,7 @@ namespace DiscordMusicBot.Services.Youtube
 
                 idsIndices[youtubeId].Add(i);
             }
-            
+
             List<Task<VideoListResponse>> tasks = new();
             foreach (var chunk in youtubeIds.Chunk(MAX_RESULTS))
             {

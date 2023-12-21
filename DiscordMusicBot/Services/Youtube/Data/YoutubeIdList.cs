@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DiscordMusicBot.Services.Youtube.Data
+﻿namespace DiscordMusicBot.Services.Youtube.Data
 {
     public record YoutubeIdsResult(YoutubeIdSource Source, string[] YoutubeIds);
 }

@@ -1,5 +1,4 @@
 ﻿using AsyncEvent;
-using System.Diagnostics;
 
 namespace DiscordMusicBot.AudioRequesting
 {

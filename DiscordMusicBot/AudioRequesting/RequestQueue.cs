@@ -1,10 +1,5 @@
 ﻿using DiscordMusicBot.Services.Discord;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
 using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
 
@@ -21,7 +16,7 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly List<Video> _history = new();
         private List<Video> _videos = new();
 
-        public RequestQueue(ILogger<RequestQueue> logger,  IAudioDownloader audioDownloader, IAudioStreamer audioStreamer)
+        public RequestQueue(ILogger<RequestQueue> logger, IAudioDownloader audioDownloader, IAudioStreamer audioStreamer)
         {
             _logger = logger;
             _audioDownloader = audioDownloader;
@@ -69,7 +64,8 @@ namespace DiscordMusicBot.AudioRequesting
 
             var message = _videos[index].MessageInfo.MessageId;
             List<Video> videos = new();
-            while ((index = _videos.FindLastIndex(index, v => v.MessageInfo.MessageId.Equals(message))) >= 0) {
+            while ((index = _videos.FindLastIndex(index, v => v.MessageInfo.MessageId.Equals(message))) >= 0)
+            {
                 videos.Add(await RemoveAtAsync(index--));
             }
             return videos.ToArray();

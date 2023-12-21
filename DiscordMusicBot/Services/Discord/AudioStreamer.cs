@@ -5,12 +5,6 @@ using Discord.WebSocket;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Discord.Volume;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting

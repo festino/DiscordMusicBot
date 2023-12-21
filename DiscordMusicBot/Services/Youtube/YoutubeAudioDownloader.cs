@@ -112,7 +112,7 @@ namespace DiscordMusicBot.Services.Youtube
                     lastPosition = await TryCopyFromUrlAsync(destination, url, position);
                 }
                 while (lastPosition is not null);
-                
+
             }
         }
 

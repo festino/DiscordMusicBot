@@ -2,13 +2,7 @@
 using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
 using DiscordMusicBot.Services.Discord;
-using DiscordMusicBot.Services.Youtube;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DiscordMusicBot
 {
@@ -57,7 +51,7 @@ namespace DiscordMusicBot
                 return _executors[guildId];
             }
 
-            Dictionary<string, ICommandExecutor>  guildExecutors = new();
+            Dictionary<string, ICommandExecutor> guildExecutors = new();
             IServiceProvider services = _scopeFactory.CreateScope().ServiceProvider;
             // cannot add guild id to the scope context
             services.GetRequiredService<IAudioStreamer>().GuildId = guildId;
