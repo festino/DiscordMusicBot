@@ -84,7 +84,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             _logger.Here().Debug("Starting {YoutubeId}", video.YoutubeId);
             _currentVideo = video;
-            _playTask = PlayAudio(pcmStream, cancellationToken);
+            _playTask = PlayAudioAsync(pcmStream, cancellationToken);
             await _playTask;
             _logger.Here().Debug("Finished {YoutubeId}", video.YoutubeId);
 
@@ -98,7 +98,7 @@ namespace DiscordMusicBot.AudioRequesting
                 await task;
         }
 
-        private async Task PlayAudio(Stream pcmStream, CancellationToken cancellationToken)
+        private async Task PlayAudioAsync(Stream pcmStream, CancellationToken cancellationToken)
         {
             if (_audioClient is null)
             {
