@@ -70,7 +70,7 @@ namespace DiscordMusicBot.Services.Discord
             if (guildId is null)
                 return;
 
-            DiscordMessageInfo info = new(message.Author.Id, (ulong)guildId, message.Channel.Id, message.Id);
+            DiscordMessageInfo info = new(message.Author.Username, message.Author.Id, (ulong)guildId, message.Channel.Id, message.Id);
             CommandResponse response = await CommandRecieved.Invoke(command, commandMessage, info);
             if (response.Message.Length == 0)
                 return;
