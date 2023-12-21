@@ -25,13 +25,14 @@ public class Program
 		);
 		Config config = new ConfigBuilder(reader).Build();
 
+		const string logTemplate = "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}";
 		Serilog.ILogger fileLogger = new LoggerConfiguration()
-			.WriteTo.File("./logs/log.txt", rollingInterval: RollingInterval.Day)
+			.WriteTo.Console(outputTemplate: logTemplate)
+			.WriteTo.File("./logs/log.txt", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate)
 			.CreateLogger();
 
 		ServiceCollection services = new();
 		services.AddLogging(builder => {
-			builder.AddConsole();
 			builder.AddSerilog(fileLogger, dispose: true);
 		});
 		services.AddSingleton<IDiscordConfig>(config);
