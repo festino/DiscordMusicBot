@@ -2,9 +2,10 @@
 using Discord;
 using Discord.Audio;
 using Discord.WebSocket;
+using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Discord.Volume;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting
@@ -34,7 +35,7 @@ namespace DiscordMusicBot.AudioRequesting
             set => _guildId = value;
         }
 
-        public AudioStreamer(ILogger<AudioStreamer> logger, DiscordBot bot)
+        public AudioStreamer(ILogger logger, DiscordBot bot)
         {
             _logger = logger;
             _client = bot.Client;
@@ -76,16 +77,16 @@ namespace DiscordMusicBot.AudioRequesting
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource = new();
             try { await _playTask; } catch { }
-            _logger.LogDebug("Stopped audio streamer");
+            _logger.Here().Debug("Stopped audio streamer");
         }
 
         private async Task StartNewAsync(Video video, Stream pcmStream, CancellationToken cancellationToken)
         {
-            _logger.LogDebug("Starting {YoutubeId}", video.YoutubeId);
+            _logger.Here().Debug("Starting {YoutubeId}", video.YoutubeId);
             _currentVideo = video;
             _playTask = PlayAudio(pcmStream, cancellationToken);
             await _playTask;
-            _logger.LogDebug("Finished {YoutubeId}", video.YoutubeId);
+            _logger.Here().Debug("Finished {YoutubeId}", video.YoutubeId);
 
             PlaybackEndedStatus status = PlaybackEndedStatus.OK;
             if (cancellationToken.IsCancellationRequested)
@@ -101,7 +102,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             if (_audioClient is null)
             {
-                _logger.LogError("Audio client is null!");
+                _logger.Here().Error("Audio client is null!");
                 return;
             }
 
@@ -113,7 +114,7 @@ namespace DiscordMusicBot.AudioRequesting
             {
                 if (!cancellationToken.IsCancellationRequested)
                 {
-                    _logger.LogError("Audio client was disconnected!\n{Exception}", e);
+                    _logger.Here().Error("Audio client was disconnected!\n{Exception}", e);
                     _audioClient = null;
                 }
             }
@@ -197,7 +198,7 @@ namespace DiscordMusicBot.AudioRequesting
             if (_audioClient is null)
                 return null;
 
-            _logger.LogInformation("Joined [{VoiceChannel}] for [{User}]", voiceChannel.Name, voiceUser);
+            _logger.Here().Information("Joined [{VoiceChannel}] for [{User}]", voiceChannel.Name, voiceUser);
             return _audioClient;
         }
     }

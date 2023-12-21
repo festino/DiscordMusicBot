@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
+using DiscordMusicBot.Extensions;
+using Serilog;
 
 namespace DiscordMusicBot.Services.Discord
 {
@@ -19,7 +20,7 @@ namespace DiscordMusicBot.Services.Discord
 
         public DiscordSocketClient Client => _client;
 
-        public DiscordBot(ILogger<DiscordBot> logger, IDiscordConfig config)
+        public DiscordBot(ILogger logger, IDiscordConfig config)
         {
             var socketConfig = new DiscordSocketConfig();
             socketConfig.GatewayIntents = GatewayIntents.Guilds
@@ -43,7 +44,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private Task Log(LogMessage msg)
         {
-            _logger.LogInformation("{Message}", msg.ToString());
+            _logger.Here().Information("{Message}", msg.ToString());
             return Task.CompletedTask;
         }
 

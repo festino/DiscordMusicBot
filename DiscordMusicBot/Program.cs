@@ -11,10 +11,26 @@ namespace DiscordMusicBot
 {
     public class Program
     {
+        private const string LogsPath = "./logs/";
+
         public static Task Main(string[] args) => new Program().MainAsync();
 
         public async Task MainAsync()
         {
+            const string logTemplate = "{Timestamp:HH:mm:ss.fff} [{Level:u3}] ({ClassName}.{MemberName}:{LineNumber}) {Message:lj}{NewLine}{Exception}";
+            ILogger logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .MinimumLevel.Debug()
+                .WriteTo.Console(
+                    outputTemplate: logTemplate
+                )
+                .WriteTo.File(
+                    Path.Combine(LogsPath, "log-{Date}.txt"),
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: logTemplate
+                )
+                .CreateLogger();
+
             ConfigReader reader = new(
                 new YamlConfigParser(),
                 new FileConfigStream("config.yml"),
@@ -22,18 +38,8 @@ namespace DiscordMusicBot
             );
             Config config = new ConfigBuilder(reader).Build();
 
-            const string logTemplate = "{Timestamp:HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}";
-            Serilog.ILogger fileLogger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console(outputTemplate: logTemplate)
-                .WriteTo.File("./logs/log.txt", rollingInterval: RollingInterval.Day, outputTemplate: logTemplate)
-                .CreateLogger();
-
             ServiceCollection services = new();
-            services.AddLogging(builder =>
-            {
-                builder.AddSerilog(fileLogger, dispose: true);
-            });
+            services.AddSingleton(logger);
             services.AddSingleton<IDiscordConfig>(config);
             services.AddSingleton<IYoutubeConfig>(config);
             services.AddSingleton<DiscordBot>();

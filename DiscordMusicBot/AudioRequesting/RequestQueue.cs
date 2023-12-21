@@ -1,5 +1,6 @@
-﻿using DiscordMusicBot.Services.Discord;
-using Microsoft.Extensions.Logging;
+﻿using DiscordMusicBot.Extensions;
+using DiscordMusicBot.Services.Discord;
+using Serilog;
 using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
 using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
 
@@ -16,7 +17,7 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly List<Video> _history = new();
         private List<Video> _videos = new();
 
-        public RequestQueue(ILogger<RequestQueue> logger, IAudioDownloader audioDownloader, IAudioStreamer audioStreamer)
+        public RequestQueue(ILogger logger, IAudioDownloader audioDownloader, IAudioStreamer audioStreamer)
         {
             _logger = logger;
             _audioDownloader = audioDownloader;
@@ -82,7 +83,7 @@ namespace DiscordMusicBot.AudioRequesting
             var videos = _videos;
             _videos = new List<Video>();
 
-            _logger.LogInformation("Queue was cleared");
+            _logger.Here().Information("Queue was cleared");
             return videos;
         }
 
@@ -137,7 +138,7 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task OnLoadFailedAsync(object sender, LoadFailedArgs args)
         {
-            _logger.LogWarning("Load failed {YoutubeId}", args.YoutubeId);
+            _logger.Here().Warning("Load failed {YoutubeId}", args.YoutubeId);
             await RemoveAtAsync(0);
         }
 
