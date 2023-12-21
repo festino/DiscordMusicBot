@@ -132,13 +132,22 @@ namespace DiscordMusicBot.AudioRequesting
                 {
                     _state = PlaybackState.PLAYING;
                     _startTime = DateTime.Now;
+                    bool isCancelled = false;
                     try
                     {
                         await output.CopyToAsync(discord, cancellationToken);
                     }
+                    catch (OperationCanceledException)
+                    {
+                        // if bot was kicked cancellationToken will not be set
+                        // causing discord.FlushAsync to hang forever
+                        isCancelled = true;
+                        throw;
+                    }
                     finally
                     {
-                        await discord.FlushAsync(cancellationToken);
+                        if (!isCancelled)
+                            await discord.FlushAsync(cancellationToken);
                     }
                 }
 
