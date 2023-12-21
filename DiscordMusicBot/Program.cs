@@ -1,7 +1,4 @@
-﻿// setup dependencies i.e. config
-// resolve dependencies (+events in constructors)
-// launch discord bot
-using DiscordMusicBot.AudioRequesting;
+﻿using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
 using DiscordMusicBot.Configuration;
