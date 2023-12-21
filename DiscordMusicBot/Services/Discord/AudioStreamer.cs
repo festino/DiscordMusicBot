@@ -24,7 +24,7 @@ namespace DiscordMusicBot.AudioRequesting
         private PlaybackState _state = PlaybackState.NO_STREAM;
         private Task _playTask = Task.CompletedTask;
         private Video? _currentVideo = null;
-        private DateTime _startTime = DateTime.Now;
+        private VolumeStream? _volumeStream = null;
 
         public event AsyncEventHandler<PlaybackEndedArgs>? Finished;
 
@@ -46,10 +46,10 @@ namespace DiscordMusicBot.AudioRequesting
             if (_state == PlaybackState.NO_STREAM)
                 return null;
 
-            if (_currentVideo is null)
+            if (_currentVideo is null || _volumeStream is null)
                 return null;
 
-            return new AudioInfo(_currentVideo, DateTime.Now - _startTime);
+            return new AudioInfo(_currentVideo, _volumeStream.TimeRead);
         }
 
         public async Task JoinAndPlayAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds)
@@ -126,16 +126,15 @@ namespace DiscordMusicBot.AudioRequesting
         {
             // TODO try load average volume 
             using (pcmStream)
-            using (var output = new VolumeStream(new AverageVolumeBalancer(), null, pcmStream))
+            using (_volumeStream = new VolumeStream(new AverageVolumeBalancer(), null, pcmStream))
             {
                 using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
                 {
                     _state = PlaybackState.PLAYING;
-                    _startTime = DateTime.Now;
                     bool isCancelled = false;
                     try
                     {
-                        await output.CopyToAsync(discord, cancellationToken);
+                        await _volumeStream.CopyToAsync(discord, cancellationToken);
                     }
                     catch (OperationCanceledException)
                     {
@@ -151,7 +150,7 @@ namespace DiscordMusicBot.AudioRequesting
                     }
                 }
 
-                if (output.AverageVolume is not null)
+                if (_volumeStream.AverageVolume is not null)
                 {
                     // TODO save average volume 
                 }
