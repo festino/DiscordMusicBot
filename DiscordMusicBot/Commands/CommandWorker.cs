@@ -1,8 +1,10 @@
 ﻿using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
+using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace DiscordMusicBot
 {
@@ -20,12 +22,14 @@ namespace DiscordMusicBot
             { typeof(HelpCommandExecutor), "help" },
         };
 
+        private readonly ILogger _logger;
         private readonly IServiceScopeFactory _scopeFactory;
 
         private readonly Dictionary<ulong, Dictionary<string, ICommandExecutor>> _executors = new();
 
-        public CommandWorker(IServiceScopeFactory scopeFactory)
+        public CommandWorker(ILogger logger, IServiceScopeFactory scopeFactory)
         {
+            _logger = logger;
             _scopeFactory = scopeFactory;
             ValidateCommands();
         }
@@ -35,6 +39,7 @@ namespace DiscordMusicBot
             Dictionary<string, ICommandExecutor> guildExecutors = GetGuildExecutors(discordMessageInfo.GuildId);
 
             command = command.ToLower();
+            _logger.Here().Information("{UserName} issued command \"{Command}\"", discordMessageInfo.RequesterName, command);
             if (guildExecutors.ContainsKey(command))
                 return await guildExecutors[command].Execute(args, discordMessageInfo);
 
@@ -47,9 +52,7 @@ namespace DiscordMusicBot
         private Dictionary<string, ICommandExecutor> GetGuildExecutors(ulong guildId)
         {
             if (_executors.ContainsKey(guildId))
-            {
                 return _executors[guildId];
-            }
 
             Dictionary<string, ICommandExecutor> guildExecutors = new();
             IServiceProvider services = _scopeFactory.CreateScope().ServiceProvider;
