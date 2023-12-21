@@ -29,7 +29,10 @@ namespace DiscordMusicBot.Services.Discord
         public DiscordBot(ILogger<DiscordBot> logger, IDiscordConfig config)
         {
             var socketConfig = new DiscordSocketConfig();
-            socketConfig.GatewayIntents |= GatewayIntents.MessageContent;
+            socketConfig.GatewayIntents = GatewayIntents.Guilds
+                | GatewayIntents.GuildVoiceStates
+                | GatewayIntents.GuildMessages
+                | GatewayIntents.MessageContent;
             _client = new DiscordSocketClient(socketConfig);
             _client.Log += Log;
             _client.MessageReceived += HandleCommandAsync;
