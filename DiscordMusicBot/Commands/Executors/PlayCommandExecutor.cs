@@ -12,22 +12,32 @@ namespace DiscordMusicBot.Commands.Executors
         private readonly RequestQueue _queue;
         private readonly IYoutubeDataProvider _youtubeDataProvider;
 
-        public PlayCommandExecutor(RequestQueue queue, IYoutubeDataProvider youtubeDataProvider)
+        private readonly INotificationService _notificationService;
+
+        public PlayCommandExecutor(INotificationService notificationService,
+                                   RequestQueue queue, IYoutubeDataProvider youtubeDataProvider)
         {
+            _notificationService = notificationService;
             _queue = queue;
             _youtubeDataProvider = youtubeDataProvider;
         }
 
-        public async Task<CommandResponse> Execute(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
         {
             string[] argsStrs = args.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (argsStrs.Length == 0)
-                return new CommandResponse(CommandResponseStatus.Error, "no argument");
+            {
+                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Error, "no argument"));
+                return;
+            }
 
             if (HasLink(args))
-                return await AddVideos(argsStrs, discordMessageInfo);
+            {
+                await _notificationService.SendAsync(await AddVideos(argsStrs, discordMessageInfo));
+                return;
+            }
 
-            return await SuggestSearch(args, discordMessageInfo);
+            await _notificationService.SendAsync(await SuggestSearch(args, discordMessageInfo));
         }
 
         private async Task<CommandResponse> SuggestSearch(string query, DiscordMessageInfo discordMessageInfo)

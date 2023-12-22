@@ -6,16 +6,18 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class NowCommandExecutor : ICommandExecutor
     {
+        private readonly INotificationService _notificationService;
         private readonly RequestQueue _queue;
         private readonly IAudioStreamer _streamer;
 
-        public NowCommandExecutor(RequestQueue queue, IAudioStreamer streamer)
+        public NowCommandExecutor(INotificationService notificationService, RequestQueue queue, IAudioStreamer streamer)
         {
+            _notificationService = notificationService;
             _queue = queue;
             _streamer = streamer;
         }
 
-        public async Task<CommandResponse> Execute(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
         {
             var history = _queue.GetHistory();
             var videos = _queue.GetVideos();
@@ -47,7 +49,7 @@ namespace DiscordMusicBot.Commands.Executors
                 }
             }
 
-            return new CommandResponse(CommandResponseStatus.Ok, message);
+            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, message));
         }
     }
 }

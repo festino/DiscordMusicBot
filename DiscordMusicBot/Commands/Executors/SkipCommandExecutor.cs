@@ -1,25 +1,31 @@
-﻿using DiscordMusicBot.AudioRequesting;
+﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Services.Discord;
 
 namespace DiscordMusicBot.Commands.Executors
 {
     public class SkipCommandExecutor : ICommandExecutor
     {
+        private readonly INotificationService _notificationService;
         private readonly RequestQueue _queue;
 
-        public SkipCommandExecutor(RequestQueue queue)
+        public SkipCommandExecutor(INotificationService notificationService, RequestQueue queue)
         {
+            _notificationService = notificationService;
             _queue = queue;
         }
 
-        public async Task<CommandResponse> Execute(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
         {
             Video? video = await _queue.RemoveCurrentAsync();
 
             if (video is null)
-                return new CommandResponse(CommandResponseStatus.Ok, "could not skip video");
+            {
+                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "could not skip video"));
+                return;
+            }
 
-            return new CommandResponse(CommandResponseStatus.Ok, "skip " + video.Header.Title);
+            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "skip " + video.Header.Title));
         }
     }
 }
