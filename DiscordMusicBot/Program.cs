@@ -44,6 +44,7 @@ namespace DiscordMusicBot
             services.AddSingleton<IDiscordConfig>(config);
             services.AddSingleton<IYoutubeConfig>(config);
             services.AddSingleton<DiscordBot>();
+            services.AddSingleton<INotificationService, DiscordNotificationService>();
             services.AddSingleton<ICommandWorker, CommandWorker>();
             services.AddSingleton<IAudioDownloader, YoutubeAudioDownloader>();
             services.AddSingleton<IYoutubeDataProvider, YoutubeDataProvider>();
@@ -60,8 +61,11 @@ namespace DiscordMusicBot
             services.AddScoped<RequestQueue>();
 
             ServiceProvider serviceProvider = services.BuildServiceProvider();
-
             var bot = serviceProvider.GetRequiredService<DiscordBot>();
+
+            var notificationService = serviceProvider.GetRequiredService<INotificationService>();
+            bot.CommandRecieved += notificationService.OnCommandAsync;
+
             var commandWorker = serviceProvider.GetRequiredService<ICommandWorker>();
             bot.CommandRecieved += commandWorker.OnCommandAsync;
 

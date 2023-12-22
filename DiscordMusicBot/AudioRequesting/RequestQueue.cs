@@ -11,6 +11,7 @@ namespace DiscordMusicBot.AudioRequesting
     {
         private readonly ILogger _logger;
 
+        private readonly INotificationService _notificationService;
         private readonly IAudioDownloader _audioDownloader;
         private readonly IAudioStreamer _audioStreamer;
 
@@ -20,11 +21,13 @@ namespace DiscordMusicBot.AudioRequesting
 
         public RequestQueue(
             ILogger logger,
+            INotificationService notificationService,
             IAudioDownloader audioDownloader,
             IAudioStreamer audioStreamer
         )
         {
             _logger = logger;
+            _notificationService = notificationService;
             _audioDownloader = audioDownloader;
             _audioStreamer = audioStreamer;
             _audioStreamer.Finished += OnAudioFinishedAsync;
@@ -92,35 +95,6 @@ namespace DiscordMusicBot.AudioRequesting
             return videos;
         }
 
-        private async Task<Video> RemoveAtAsync(int index)
-        {
-            Video video = _videos[index];
-            _videos.RemoveAt(index);
-            _audioDownloader.StopDownloading(video.YoutubeId);
-            if (index == 0)
-                await _audioStreamer.StopAsync();
-
-            if (_videos.Count == 0)
-            {
-                // TODO write message AFTER skip message
-                _audioStreamer.RequestLeave();
-            }
-
-            TryRequestDownload(index);
-            return video;
-        }
-
-        private void TryRequestDownload(int index)
-        {
-            if (index >= _videos.Count)
-                return;
-
-            if (index == 0)
-                _audioDownloader.RequestDownload(_videos[0].YoutubeId, true);
-            if (index <= 1 && _videos.Count >= 2)
-                _audioDownloader.RequestDownload(_videos[1].YoutubeId, false);
-        }
-
         private async Task OnLoadCompletedAsync(object sender, LoadCompletedArgs args)
         {
             if (_videos.Count == 0 || _videos[0].YoutubeId != args.YoutubeId)
@@ -129,22 +103,6 @@ namespace DiscordMusicBot.AudioRequesting
             Video video = _videos[0];
             AddToHistory(video);
             await _audioStreamer.JoinAndPlayAsync(video, args.PcmStream, GetRequesterIds);
-        }
-
-        private ulong[] GetRequesterIds()
-        {
-            return _videos
-                .Select((video) => video.MessageInfo.RequesterId)
-                .Distinct()
-                .ToArray();
-        }
-
-        private void AddToHistory(Video video)
-        {
-            if (_history.Count >= MaxHistoryCount)
-                _history.RemoveAt(0);
-
-            _history.Add(video);
         }
 
         private async Task OnLoadFailedAsync(object sender, LoadFailedArgs args)
@@ -167,6 +125,52 @@ namespace DiscordMusicBot.AudioRequesting
                 return;
 
             await RemoveAtAsync(0);
+        }
+
+        private async Task<Video> RemoveAtAsync(int index)
+        {
+            Video video = _videos[index];
+            _videos.RemoveAt(index);
+            _audioDownloader.StopDownloading(video.YoutubeId);
+            if (index == 0)
+                await _audioStreamer.StopAsync();
+
+            if (_videos.Count == 0)
+            {
+                // TODO write message AFTER skip message
+                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "no videos left!!!"));
+                _audioStreamer.RequestLeave();
+            }
+
+            TryRequestDownload(index);
+            return video;
+        }
+
+        private void TryRequestDownload(int index)
+        {
+            if (index >= _videos.Count)
+                return;
+
+            if (index == 0)
+                _audioDownloader.RequestDownload(_videos[0].YoutubeId, true);
+            if (index <= 1 && _videos.Count >= 2)
+                _audioDownloader.RequestDownload(_videos[1].YoutubeId, false);
+        }
+
+        private ulong[] GetRequesterIds()
+        {
+            return _videos
+                .Select((video) => video.MessageInfo.RequesterId)
+                .Distinct()
+                .ToArray();
+        }
+
+        private void AddToHistory(Video video)
+        {
+            if (_history.Count >= MaxHistoryCount)
+                _history.RemoveAt(0);
+
+            _history.Add(video);
         }
     }
 }
