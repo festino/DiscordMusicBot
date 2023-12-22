@@ -37,7 +37,7 @@ namespace DiscordMusicBot.Services.Discord
             if (channel is not ISocketMessageChannel messageChannel)
             {
                 _logger.Here().Error("Could not send message, channel #{ChannelId} ({Channel}) " +
-                              "is not a message channel: {Message}", channelId, channel, message);
+                                     "is not a message channel: {Message}", channelId, channel, message);
                 return;
             }
 
@@ -66,10 +66,10 @@ namespace DiscordMusicBot.Services.Discord
                 return null;
 
             return _lastChannels
-                .GroupBy(id => id)
-                .Select(g => (g.Key, Count: g.Count()))
-                .MaxBy(t => t.Count)
-                .Key;
+                    .GroupBy(id => id)
+                    .Select(g => (g.Key, Count: g.Count()))
+                    .MaxBy(t => t.Count)
+                    .Key;
         }
     }
 }
