@@ -222,10 +222,10 @@ namespace DiscordMusicBot.AudioRequesting
             if (GetChannels(getRequesterIds()).Select(t => t.Item1.Id).Contains(channelId))
                 return;
 
+            _logger.Here().Debug("Joining voice channel");
             _state = PlaybackState.TryingToJoin;
             while (!cancellationToken.IsCancellationRequested)
             {
-                _logger.Here().Debug("Joining voice channel");
                 _audioClient = await TryJoinAsync(getRequesterIds);
                 if (_audioClient is not null)
                     return;
