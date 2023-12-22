@@ -41,7 +41,7 @@ namespace DiscordMusicBot.Services.Discord
                 return;
             }
 
-            string responseMessage = message;
+            string responseMessage = Format.Sanitize(message);
             if (responseMessage.Length > MaxMessageLength)
             {
                 responseMessage = responseMessage[..(MaxMessageLength - 3)] + "...";
