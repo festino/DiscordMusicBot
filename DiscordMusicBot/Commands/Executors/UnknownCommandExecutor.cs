@@ -12,9 +12,9 @@ namespace DiscordMusicBot.Commands.Executors
             _notificationService = notificationService;
         }
 
-        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "unknown command"));
+            await _notificationService.SendAsync(CommandStatus.Info, "unknown command", messageInfo);
         }
     }
 }

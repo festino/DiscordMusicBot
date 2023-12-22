@@ -24,7 +24,7 @@ namespace DiscordMusicBot.Services.Discord
             _client = bot.Client;
         }
 
-        public async Task SendAsync(CommandResponse message, DiscordMessageInfo? messageInfo = null)
+        public async Task SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null)
         {
             ulong? channelId = messageInfo?.ChannelId ?? GetCommandChannel();
             if (channelId is null)
@@ -41,7 +41,7 @@ namespace DiscordMusicBot.Services.Discord
                 return;
             }
 
-            string responseMessage = message.Message;
+            string responseMessage = message;
             if (responseMessage.Length > MaxMessageLength)
             {
                 responseMessage = responseMessage[..(MaxMessageLength - 3)] + "...";

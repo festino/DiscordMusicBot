@@ -15,17 +15,17 @@ namespace DiscordMusicBot.Commands.Executors
             _queue = queue;
         }
 
-        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
             Video? video = await _queue.RemoveCurrentAsync();
 
             if (video is null)
             {
-                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "could not skip video"));
+                await _notificationService.SendAsync(CommandStatus.Info, "could not skip video", messageInfo);
                 return;
             }
 
-            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "skip " + video.Header.Title));
+            await _notificationService.SendAsync(CommandStatus.Info, "skip " + video.Header.Title);
         }
     }
 }

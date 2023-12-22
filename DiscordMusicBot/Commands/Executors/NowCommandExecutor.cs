@@ -17,7 +17,7 @@ namespace DiscordMusicBot.Commands.Executors
             _streamer = streamer;
         }
 
-        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
             var history = _queue.GetHistory();
             var videos = _queue.GetVideos();
@@ -49,7 +49,7 @@ namespace DiscordMusicBot.Commands.Executors
                 }
             }
 
-            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, message));
+            await _notificationService.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }
 }

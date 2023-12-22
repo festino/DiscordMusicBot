@@ -12,10 +12,10 @@ namespace DiscordMusicBot.Commands.Executors
             _notificationService = notificationService;
         }
 
-        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "available commands:\n" +
-                                                 "help, play, skip, undo, stop, list, now"));
+            await _notificationService.SendAsync(CommandStatus.Info, "available commands:\n" +
+                                                 "help, play, skip, undo, stop, list, now", messageInfo);
         }
     }
 }

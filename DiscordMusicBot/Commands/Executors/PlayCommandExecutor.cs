@@ -1,7 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Services.Discord;
-using DiscordMusicBot.Services.Youtube;
 using DiscordMusicBot.Services.Youtube.Data;
 
 namespace DiscordMusicBot.Commands.Executors
@@ -22,35 +21,38 @@ namespace DiscordMusicBot.Commands.Executors
             _youtubeDataProvider = youtubeDataProvider;
         }
 
-        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
             string[] argsStrs = args.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (argsStrs.Length == 0)
             {
-                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Error, "no argument"));
+                await _notificationService.SendAsync(CommandStatus.Error, "no argument", messageInfo);
                 return;
             }
 
             if (HasLink(args))
             {
-                await _notificationService.SendAsync(await AddVideos(argsStrs, discordMessageInfo));
+                await AddVideos(argsStrs, messageInfo);
                 return;
             }
 
-            await _notificationService.SendAsync(await SuggestSearch(args, discordMessageInfo));
+            await SuggestSearch(args, messageInfo);
         }
 
-        private async Task<CommandResponse> SuggestSearch(string query, DiscordMessageInfo discordMessageInfo)
+        private async Task SuggestSearch(string query, DiscordMessageInfo messageInfo)
         {
             Tuple<string, VideoHeader>[] options = await _youtubeDataProvider.Search(query);
             string[] topOptions = options.Take(SearchResultCount).Select(t => t.Item2.Title).ToArray();
             if (topOptions.Length == 0)
-                return new CommandResponse(CommandResponseStatus.Error, "no search results");
+            {
+                await _notificationService.SendAsync(CommandStatus.Error, "no search results", messageInfo);
+                return;
+            }
 
-            return new CommandResponse(CommandResponseStatus.Suggest, "choose:\n" + string.Join('\n', topOptions));
+            await _notificationService.SendAsync(CommandStatus.Info, "choose:\n" + string.Join('\n', topOptions), messageInfo);
         }
 
-        private async Task<CommandResponse> AddVideos(string[] args, DiscordMessageInfo discordMessageInfo)
+        private async Task AddVideos(string[] args, DiscordMessageInfo messageInfo)
         {
             List<string> badArgs = new();
             List<string> youtubeIds = new();
@@ -70,7 +72,10 @@ namespace DiscordMusicBot.Commands.Executors
             }
 
             if (badArgs.Count > 0)
-                return new CommandResponse(CommandResponseStatus.Error, $"could not get ids: {string.Join(", ", badArgs)}");
+            {
+                await _notificationService.SendAsync(CommandStatus.Error, $"could not get ids: {string.Join(", ", badArgs)}", messageInfo);
+                return;
+            }
 
             var headersResult = await _youtubeDataProvider.GetHeaders(youtubeIds.ToArray());
             List<string> badIds = new();
@@ -85,19 +90,22 @@ namespace DiscordMusicBot.Commands.Executors
             }
 
             if (badIds.Count > 0)
-                return new CommandResponse(CommandResponseStatus.Error, $"there are invalid ids: {string.Join(", ", badIds)}");
+            {
+                await _notificationService.SendAsync(CommandStatus.Error, $"there are invalid ids: {string.Join(", ", badIds)}", messageInfo);
+                return;
+            }
 
             for (int i = 0; i < headers.Count; i++)
             {
-                _queue.Add(new Video(youtubeIds[i], headers[i], discordMessageInfo));
+                _queue.Add(new Video(youtubeIds[i], headers[i], messageInfo));
             }
 
-            return new CommandResponse(CommandResponseStatus.Ok,
+            await _notificationService.SendAsync(CommandStatus.Info,
                 headers.Count == 1 ? $"added song {headers[0].Title}" : $"added {headers.Count} songs"
             );
         }
 
-        private bool HasLink(string s)
+        private static bool HasLink(string s)
         {
             return s.Contains('.') && s.Contains('/');
         }

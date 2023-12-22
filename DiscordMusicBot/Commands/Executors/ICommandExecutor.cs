@@ -4,6 +4,6 @@ namespace DiscordMusicBot.Commands
 {
     public interface ICommandExecutor
     {
-        Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo);
+        Task ExecuteAsync(string args, DiscordMessageInfo messageInfo);
     }
 }

@@ -138,7 +138,7 @@ namespace DiscordMusicBot.AudioRequesting
             if (_videos.Count == 0)
             {
                 // TODO write message AFTER skip message
-                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "no videos left!!!"));
+                await _notificationService.SendAsync(CommandStatus.Info, "no videos left!!!");
                 _audioStreamer.RequestLeave();
             }
 

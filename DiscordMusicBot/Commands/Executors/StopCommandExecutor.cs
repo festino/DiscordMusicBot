@@ -15,17 +15,17 @@ namespace DiscordMusicBot.Commands.Executors
             _queue = queue;
         }
 
-        public async Task ExecuteAsync(string args, DiscordMessageInfo discordMessageInfo)
+        public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
             var list = await _queue.ClearAsync();
             if (list.Count == 0)
             {
-                await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok, "queue is empty"));
+                await _notificationService.SendAsync(CommandStatus.Info, "queue is empty", messageInfo);
                 return;
             }
 
-            await _notificationService.SendAsync(new CommandResponse(CommandResponseStatus.Ok,
-                                                 "drop queue\n" + string.Join("\n", list.Select((v) => v.Header.Title))));
+            await _notificationService.SendAsync(CommandStatus.Info,
+                                                 "drop queue\n" + string.Join("\n", list.Select((v) => v.Header.Title)));
         }
     }
 }
