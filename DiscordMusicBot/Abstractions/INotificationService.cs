@@ -1,10 +1,11 @@
 ﻿using DiscordMusicBot.Services.Discord;
+using static DiscordMusicBot.Abstractions.ICommandSender;
 
 namespace DiscordMusicBot.Abstractions
 {
     public interface INotificationService
     {
         Task SendAsync(CommandResponse message, DiscordMessageInfo? messageInfo = null);
-        Task<CommandResponse> OnCommandAsync(string command, string args, DiscordMessageInfo discordMessageInfo);
+        Task OnCommandAsync(object sender, CommandRecievedArgs args);
     }
 }
