@@ -91,6 +91,7 @@ namespace DiscordMusicBot.AudioRequesting
             var videos = _videos;
             _videos = new List<Video>();
 
+            await TryLeaveAsync();
             _logger.Here().Information("Queue was cleared");
             return videos;
         }
@@ -135,15 +136,19 @@ namespace DiscordMusicBot.AudioRequesting
             if (index == 0)
                 await _audioStreamer.StopAsync();
 
+            await TryLeaveAsync();
+            TryRequestDownload(index);
+            return video;
+        }
+
+        private async Task TryLeaveAsync()
+        {
             if (_videos.Count == 0)
             {
                 // TODO write message AFTER skip message
                 await _notificationService.SendAsync(CommandStatus.Info, "no videos left!!!");
                 _audioStreamer.RequestLeave();
             }
-
-            TryRequestDownload(index);
-            return video;
         }
 
         private void TryRequestDownload(int index)
