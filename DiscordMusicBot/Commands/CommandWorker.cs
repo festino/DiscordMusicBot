@@ -5,24 +5,29 @@ using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using static DiscordMusicBot.Abstractions.ICommandSender;
 
 namespace DiscordMusicBot
 {
     public class CommandWorker : ICommandWorker
     {
+        private const string UnknownCommandKey = "";
         private readonly bool ReplyUnknownCommand = false;
+
         private readonly Dictionary<Type, string> ExecutorsCommands = new()
         {
+            { typeof(UnknownCommandExecutor), UnknownCommandKey },
+            { typeof(HelpCommandExecutor), "help" },
             { typeof(PlayCommandExecutor), "play" },
             { typeof(ListCommandExecutor), "list" },
             { typeof(StopCommandExecutor), "stop" },
             { typeof(SkipCommandExecutor), "skip" },
             { typeof(UndoCommandExecutor), "undo" },
             { typeof(NowCommandExecutor), "now" },
-            { typeof(HelpCommandExecutor), "help" },
         };
 
         private readonly ILogger _logger;
+
         private readonly IServiceScopeFactory _scopeFactory;
 
         private readonly Dictionary<ulong, Dictionary<string, ICommandExecutor>> _executors = new();
@@ -34,23 +39,22 @@ namespace DiscordMusicBot
             ValidateCommands();
         }
 
-        public async Task<CommandResponse> OnCommandAsync(string command, string args, DiscordMessageInfo discordMessageInfo)
+        public async Task OnCommandAsync(object sender, CommandRecievedArgs args)
         {
-            Dictionary<string, ICommandExecutor> guildExecutors = GetGuildExecutors(discordMessageInfo.GuildId);
+            Dictionary<string, ICommandExecutor> guildExecutors = GetGuildExecutors(args);
 
-            command = command.ToLower();
-            _logger.Here().Information("{UserName} issued command \"{Command}\"", discordMessageInfo.RequesterName, command);
+            string command = args.Command.ToLower();
+            _logger.Here().Information("{UserName} issued command \"{Command}\"", args.MessageInfo.RequesterName, command);
             if (guildExecutors.ContainsKey(command))
-                return await guildExecutors[command].Execute(args, discordMessageInfo);
+                await guildExecutors[command].ExecuteAsync(args.Message, args.MessageInfo);
 
             if (ReplyUnknownCommand)
-                return new CommandResponse(CommandResponseStatus.Error, "unknown command");
-
-            return new CommandResponse(CommandResponseStatus.Ok, "");
+                await guildExecutors[UnknownCommandKey].ExecuteAsync(args.Message, args.MessageInfo);
         }
 
-        private Dictionary<string, ICommandExecutor> GetGuildExecutors(ulong guildId)
+        private Dictionary<string, ICommandExecutor> GetGuildExecutors(CommandRecievedArgs args)
         {
+            ulong guildId = args.MessageInfo.GuildId;
             if (_executors.ContainsKey(guildId))
                 return _executors[guildId];
 
@@ -63,6 +67,11 @@ namespace DiscordMusicBot
                 guildExecutors.Add(ExecutorsCommands[executor.GetType()], executor);
             }
 
+            var notificationService = services.GetRequiredService<INotificationService>();
+            var bot = services.GetRequiredService<DiscordBot>();
+            notificationService.OnCommandAsync(this, args).Wait();
+            bot.CommandRecieved += notificationService.OnCommandAsync;
+
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;
         }
@@ -72,9 +81,6 @@ namespace DiscordMusicBot
             Dictionary<string, Type> commandsExecutors = new();
             foreach ((Type type, string command) in ExecutorsCommands.AsEnumerable())
             {
-                if (command.Length == 0)
-                    throw new Exception($"Command cannot be empty: {type}");
-
                 if (command.Contains(' '))
                     throw new Exception($"Command cannot contain ' ': \"{command}\" of {type}");
 

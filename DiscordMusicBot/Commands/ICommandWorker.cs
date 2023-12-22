@@ -1,9 +1,9 @@
-﻿using DiscordMusicBot.Services.Discord;
+﻿using static DiscordMusicBot.Abstractions.ICommandSender;
 
 namespace DiscordMusicBot
 {
     public interface ICommandWorker
     {
-        Task<CommandResponse> OnCommandAsync(string command, string args, DiscordMessageInfo discordMessageInfo);
+        Task OnCommandAsync(object sender, CommandRecievedArgs args);
     }
 }
