@@ -1,12 +1,16 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Extensions;
 using Serilog;
+using static DiscordMusicBot.Abstractions.ICommandSender;
 
 namespace DiscordMusicBot.Services.Discord
 {
     public class DiscordNotificationService : INotificationService
     {
+        private const int MaxMessageLength = 2000;
+
         private const int QueueSize = 10;
         private readonly Queue<ulong> _lastChannels = new();
 
@@ -25,29 +29,35 @@ namespace DiscordMusicBot.Services.Discord
             ulong? channelId = messageInfo?.ChannelId ?? GetCommandChannel();
             if (channelId is null)
             {
-                _logger.Error("Could not send message, no channel id: {Message}", message);
+                _logger.Here().Error("Could not send message, no channel id: {Message}", message);
                 return;
             }
 
             IChannel? channel = await _client.GetChannelAsync((ulong)channelId);
             if (channel is not ISocketMessageChannel messageChannel)
             {
-                _logger.Error("Could not send message, channel #{ChannelId} ({Channel}) " +
+                _logger.Here().Error("Could not send message, channel #{ChannelId} ({Channel}) " +
                               "is not a message channel: {Message}", channelId, channel, message);
                 return;
             }
 
-            await messageChannel.SendMessageAsync(message.Message);
+            string responseMessage = message.Message;
+            if (responseMessage.Length > MaxMessageLength)
+            {
+                responseMessage = responseMessage[..(MaxMessageLength - 3)] + "...";
+            }
+
+            await messageChannel.SendMessageAsync(responseMessage);
         }
 
-        public async Task<CommandResponse> OnCommandAsync(string command, string args, DiscordMessageInfo discordMessageInfo)
+        public Task OnCommandAsync(object sender, CommandRecievedArgs args)
         {
-            _lastChannels.Enqueue(discordMessageInfo.ChannelId);
+            _lastChannels.Enqueue(args.MessageInfo.ChannelId);
             if (_lastChannels.Count > QueueSize)
             {
                 _lastChannels.Dequeue();
             }
-            return new CommandResponse(CommandResponseStatus.Empty, "");
+            return Task.CompletedTask;
         }
 
         private ulong? GetCommandChannel()

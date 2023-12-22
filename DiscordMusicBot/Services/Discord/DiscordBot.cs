@@ -1,22 +1,22 @@
-﻿using Discord;
+﻿using AsyncEvent;
+using Discord;
 using Discord.WebSocket;
+using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
 using Serilog;
+using static DiscordMusicBot.Abstractions.ICommandSender;
 
 namespace DiscordMusicBot.Services.Discord
 {
-    public class DiscordBot
+    public class DiscordBot : ICommandSender
     {
-        private const int MaxMessageLength = 2000;
-
         private readonly ILogger _logger;
 
         private readonly string _commandPrefix;
         private readonly DiscordSocketClient _client;
         private readonly string _token;
 
-        public delegate Task<CommandResponse> OnCommandRecieved(string command, string message, DiscordMessageInfo messageInfo);
-        public event OnCommandRecieved? CommandRecieved;
+        public event AsyncEventHandler<CommandRecievedArgs>? CommandRecieved;
 
         public DiscordSocketClient Client => _client;
 
@@ -71,16 +71,7 @@ namespace DiscordMusicBot.Services.Discord
                 return;
 
             DiscordMessageInfo info = new(message.Author.Username, message.Author.Id, (ulong)guildId, message.Channel.Id, message.Id);
-            CommandResponse response = await CommandRecieved.Invoke(command, commandMessage, info);
-            if (response.Message.Length == 0)
-                return;
-
-            string responseMessage = response.Message;
-            if (responseMessage.Length > MaxMessageLength)
-            {
-                responseMessage = responseMessage[..(MaxMessageLength - 3)] + "...";
-            }
-            await message.Channel.SendMessageAsync(responseMessage);
+            await CommandRecieved.InvokeAsync(this, new CommandRecievedArgs(command, commandMessage, info));
         }
     }
 }
