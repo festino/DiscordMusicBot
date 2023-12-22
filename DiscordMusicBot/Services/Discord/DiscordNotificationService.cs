@@ -3,7 +3,6 @@ using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
 using Serilog;
-using static DiscordMusicBot.Abstractions.ICommandSender;
 
 namespace DiscordMusicBot.Services.Discord
 {
@@ -11,22 +10,22 @@ namespace DiscordMusicBot.Services.Discord
     {
         private const int MaxMessageLength = 2000;
 
-        private const int QueueSize = 10;
-        private readonly Queue<ulong> _lastChannels = new();
-
         private readonly ILogger _logger;
 
         private readonly DiscordSocketClient _client;
 
-        public DiscordNotificationService(ILogger logger, DiscordBot bot)
+        private readonly IGuildWatcher _guildWatcher;
+
+        public DiscordNotificationService(ILogger logger, IGuildWatcher guildWatcher, DiscordBot bot)
         {
             _logger = logger;
+            _guildWatcher = guildWatcher;
             _client = bot.Client;
         }
 
         public async Task SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null)
         {
-            ulong? channelId = messageInfo?.ChannelId ?? GetCommandChannel();
+            ulong? channelId = messageInfo?.ChannelId ?? _guildWatcher.GetCommandChannel();
             if (channelId is null)
             {
                 _logger.Here().Error("Could not send message, no channel id: {Message}", message);
@@ -48,28 +47,6 @@ namespace DiscordMusicBot.Services.Discord
             }
 
             await messageChannel.SendMessageAsync(responseMessage);
-        }
-
-        public Task OnCommandAsync(object sender, CommandRecievedArgs args)
-        {
-            _lastChannels.Enqueue(args.MessageInfo.ChannelId);
-            if (_lastChannels.Count > QueueSize)
-            {
-                _lastChannels.Dequeue();
-            }
-            return Task.CompletedTask;
-        }
-
-        private ulong? GetCommandChannel()
-        {
-            if (_lastChannels.Count == 0)
-                return null;
-
-            return _lastChannels
-                    .GroupBy(id => id)
-                    .Select(g => (g.Key, Count: g.Count()))
-                    .MaxBy(t => t.Count)
-                    .Key;
         }
     }
 }

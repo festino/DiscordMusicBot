@@ -67,10 +67,10 @@ namespace DiscordMusicBot
                 guildExecutors.Add(ExecutorsCommands[executor.GetType()], executor);
             }
 
-            var notificationService = services.GetRequiredService<INotificationService>();
+            var guildWatcher = services.GetRequiredService<IGuildWatcher>();
             var bot = services.GetRequiredService<DiscordBot>();
-            notificationService.OnCommandAsync(this, args).Wait();
-            bot.CommandRecieved += notificationService.OnCommandAsync;
+            guildWatcher.OnCommandAsync(this, args).Wait();
+            bot.CommandRecieved += guildWatcher.OnCommandAsync;
 
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;
