@@ -63,7 +63,7 @@ namespace DiscordMusicBot
 
             var bot = serviceProvider.GetRequiredService<DiscordBot>();
             var commandWorker = serviceProvider.GetRequiredService<ICommandWorker>();
-            bot.CommandRecieved += commandWorker.OnCommand;
+            bot.CommandRecieved += commandWorker.OnCommandAsync;
 
             await bot.RunAsync();
         }

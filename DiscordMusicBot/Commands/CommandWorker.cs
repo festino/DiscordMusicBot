@@ -34,7 +34,7 @@ namespace DiscordMusicBot
             ValidateCommands();
         }
 
-        public async Task<CommandResponse> OnCommand(string command, string args, DiscordMessageInfo discordMessageInfo)
+        public async Task<CommandResponse> OnCommandAsync(string command, string args, DiscordMessageInfo discordMessageInfo)
         {
             Dictionary<string, ICommandExecutor> guildExecutors = GetGuildExecutors(discordMessageInfo.GuildId);
 

@@ -4,6 +4,6 @@ namespace DiscordMusicBot
 {
     public interface ICommandWorker
     {
-        Task<CommandResponse> OnCommand(string command, string args, DiscordMessageInfo discordMessageInfo);
+        Task<CommandResponse> OnCommandAsync(string command, string args, DiscordMessageInfo discordMessageInfo);
     }
 }
