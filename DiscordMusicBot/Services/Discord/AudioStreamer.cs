@@ -245,6 +245,7 @@ namespace DiscordMusicBot.AudioRequesting
             if (_audioClient is null)
                 return null;
 
+            _channelId = voiceChannel.Id;
             _logger.Here().Information("Joined [{VoiceChannel}] for [{UserName}]", voiceChannel.Name, voiceUser.Username);
             return _audioClient;
         }
