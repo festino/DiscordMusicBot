@@ -124,6 +124,7 @@ namespace DiscordMusicBot.AudioRequesting
             {
                 await Task.Delay(delayMs, cancellationToken);
             }
+            _logger.Here().Information("Leaving voice channel");
             _audioClient?.StopAsync();
             _audioClient = null;
             _channelId = null;
@@ -224,6 +225,7 @@ namespace DiscordMusicBot.AudioRequesting
             _state = PlaybackState.TryingToJoin;
             while (!cancellationToken.IsCancellationRequested)
             {
+                _logger.Here().Debug("Joining voice channel");
                 _audioClient = await TryJoinAsync(getRequesterIds);
                 if (_audioClient is not null)
                     return;
