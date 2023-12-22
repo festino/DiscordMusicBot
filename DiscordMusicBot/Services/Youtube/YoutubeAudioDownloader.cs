@@ -1,10 +1,10 @@
 ﻿using AsyncEvent;
-using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Abstractions;
 using Serilog;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
-using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
+using static DiscordMusicBot.Abstractions.IAudioDownloader;
 using static DiscordMusicBot.Extensions.LoggerExtensions;
 
 namespace DiscordMusicBot.Services.Youtube

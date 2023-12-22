@@ -1,6 +1,7 @@
-﻿using DiscordMusicBot.Services.Youtube.Data;
+﻿using DiscordMusicBot.Services.Youtube;
+using DiscordMusicBot.Services.Youtube.Data;
 
-namespace DiscordMusicBot.Services.Youtube
+namespace DiscordMusicBot.Abstractions
 {
     public interface IYoutubeDataProvider
     {

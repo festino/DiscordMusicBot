@@ -1,7 +1,8 @@
 ﻿using AsyncEvent;
+using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Services.Discord;
 
-namespace DiscordMusicBot.AudioRequesting
+namespace DiscordMusicBot.Abstractions
 {
     public interface IAudioStreamer
     {

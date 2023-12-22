@@ -1,6 +1,6 @@
 ﻿using AsyncEvent;
 
-namespace DiscordMusicBot.AudioRequesting
+namespace DiscordMusicBot.Abstractions
 {
     public interface IAudioDownloader
     {

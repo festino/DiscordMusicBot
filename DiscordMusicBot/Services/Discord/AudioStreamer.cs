@@ -2,11 +2,12 @@
 using Discord;
 using Discord.Audio;
 using Discord.WebSocket;
+using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Discord.Volume;
 using Serilog;
-using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
+using static DiscordMusicBot.Abstractions.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting
 {

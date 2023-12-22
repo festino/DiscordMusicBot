@@ -1,4 +1,4 @@
-﻿using DiscordMusicBot.AudioRequesting;
+﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
 using DiscordMusicBot.Extensions;

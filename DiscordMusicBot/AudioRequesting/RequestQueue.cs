@@ -1,8 +1,9 @@
-﻿using DiscordMusicBot.Extensions;
+﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord;
 using Serilog;
-using static DiscordMusicBot.AudioRequesting.IAudioDownloader;
-using static DiscordMusicBot.AudioRequesting.IAudioStreamer;
+using static DiscordMusicBot.Abstractions.IAudioDownloader;
+using static DiscordMusicBot.Abstractions.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting
 {
@@ -17,7 +18,11 @@ namespace DiscordMusicBot.AudioRequesting
         private readonly List<Video> _history = new();
         private List<Video> _videos = new();
 
-        public RequestQueue(ILogger logger, IAudioDownloader audioDownloader, IAudioStreamer audioStreamer)
+        public RequestQueue(
+            ILogger logger,
+            IAudioDownloader audioDownloader,
+            IAudioStreamer audioStreamer
+        )
         {
             _logger = logger;
             _audioDownloader = audioDownloader;
