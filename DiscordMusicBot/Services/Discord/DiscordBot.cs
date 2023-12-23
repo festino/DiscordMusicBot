@@ -29,7 +29,8 @@ namespace DiscordMusicBot.Services.Discord
                 | GatewayIntents.MessageContent;
             _client = new DiscordSocketClient(socketConfig);
             _client.Log += Log;
-            _client.MessageReceived += HandleCommandAsync;
+            _client.MessageReceived += HandleMessageAsync;
+            _client.ButtonExecuted += HandleButtonAsync;
             _token = config.DiscordToken;
             _commandPrefix = config.CommandPrefix;
             _logger = logger;
@@ -48,29 +49,42 @@ namespace DiscordMusicBot.Services.Discord
             return Task.CompletedTask;
         }
 
-        private async Task HandleCommandAsync(SocketMessage messageParam)
+        private async Task HandleMessageAsync(SocketMessage messageParam)
         {
-            if (CommandRecieved is null)
-                return;
-
             // Don't process the command if it was a system message
-            var message = messageParam as SocketUserMessage;
-            if (message is null)
+            if (messageParam is not SocketUserMessage message)
                 return;
 
             string text = message.Content;
             if (message.Author.IsBot || !text.StartsWith(_commandPrefix))
                 return;
 
-            int index = text.IndexOf(' ', _commandPrefix.Length);
-            index = index < 0 ? text.Length : index;
-            string command = text[_commandPrefix.Length..index];
-            string commandMessage = text[index..];
-            ulong? guildId = (message.Channel as SocketGuildChannel)?.Guild.Id;
+            text = text[_commandPrefix.Length..];
+            await HandleCommandAsync(text, message.Author, message.Id, message.Channel);
+        }
+
+        private async Task HandleButtonAsync(SocketMessageComponent component)
+        {
+            await HandleCommandAsync(component.Data.CustomId, component.User, component.Message.Id, component.Message.Channel);
+            await component.DeferAsync();
+            await component.Message.DeleteAsync();
+        }
+
+        private async Task HandleCommandAsync(string text, SocketUser user, ulong messageId, ISocketMessageChannel channel)
+        {
+            if (CommandRecieved is null)
+                return;
+
+            ulong? guildId = (channel as SocketGuildChannel)?.Guild.Id;
             if (guildId is null)
                 return;
 
-            DiscordMessageInfo info = new(message.Author.Username, message.Author.Id, (ulong)guildId, message.Channel.Id, message.Id);
+            int index = text.IndexOf(' ');
+            index = index < 0 ? text.Length : index;
+            string command = text[..index];
+            string commandMessage = text[index..];
+
+            DiscordMessageInfo info = new(user.Username, user.Id, (ulong)guildId, channel.Id, messageId);
             await CommandRecieved.InvokeAsync(this, new CommandRecievedArgs(command, commandMessage, info));
         }
     }
