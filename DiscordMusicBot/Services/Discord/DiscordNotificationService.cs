@@ -25,28 +25,58 @@ namespace DiscordMusicBot.Services.Discord
 
         public async Task SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null)
         {
+            await SendMessageAsync(messageInfo, message);
+        }
+
+        public async Task SuggestAsync(string message, SuggestOption[] options, DiscordMessageInfo? messageInfo = null)
+        {
+            var builder = new ComponentBuilder();
+            foreach (SuggestOption option in options)
+            {
+                builder = builder.WithButton(option.Caption, option.MessageOnClick, ButtonStyle.Secondary);
+            }
+
+            message = RestrictMessage(message);
+            await SendMessageAsync(messageInfo, message, builder.Build());
+        }
+
+        private async Task SendMessageAsync(DiscordMessageInfo? messageInfo, string message, MessageComponent? components = null)
+        {
+            var channel = await GetMessageChannelAsync(messageInfo);
+            if (channel is null) return;
+
+            message = RestrictMessage(message);
+            await channel.SendMessageAsync(message, components: components);
+        }
+
+        private async Task<ISocketMessageChannel?> GetMessageChannelAsync(DiscordMessageInfo? messageInfo)
+        {
             ulong? channelId = messageInfo?.ChannelId ?? _guildWatcher.GetCommandChannel();
             if (channelId is null)
             {
-                _logger.Here().Error("Could not send message, no channel id: {Message}", message);
-                return;
+                _logger.Here().Error("Could not send message, no channel id");
+                return null;
             }
 
             IChannel? channel = await _client.GetChannelAsync((ulong)channelId);
             if (channel is not ISocketMessageChannel messageChannel)
             {
                 _logger.Here().Error("Could not send message, channel #{ChannelId} ({Channel}) " +
-                                     "is not a message channel: {Message}", channelId, channel, message);
-                return;
+                                     "is not a message channel", channelId, channel);
+                return null;
             }
 
-            string responseMessage = Format.Sanitize(message);
-            if (responseMessage.Length > MaxMessageLength)
+            return messageChannel;
+        }
+
+        private string RestrictMessage(string message)
+        {
+            message = Format.Sanitize(message);
+            if (message.Length > MaxMessageLength)
             {
-                responseMessage = responseMessage[..(MaxMessageLength - 3)] + "...";
+                message = message[..(MaxMessageLength - 3)] + "...";
             }
-
-            await messageChannel.SendMessageAsync(responseMessage);
+            return message;
         }
     }
 }
