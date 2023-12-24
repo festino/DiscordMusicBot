@@ -1,6 +1,7 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Services.Discord;
+using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
 {
@@ -38,10 +39,7 @@ namespace DiscordMusicBot.Commands.Executors
                     currentTime = info.CurrentTime;
                 }
 
-                string formatStr = fullTime.TotalHours >= 1.0 ? @"hh\:mm\:ss" : @"mm\:ss";
-                string currentTimeStr = currentTime.ToString(formatStr);
-                string fullTimeStr = fullTime.ToString(formatStr);
-                message += $"\n{videos[0].Header.Title} ({currentTimeStr} / {fullTimeStr})";
+                message += $"\n{videos[0].Header.Title} ({FormatUtils.FormatTimestamps(currentTime, fullTime)})";
 
                 for (int i = 1; i < Math.Min(videos.Count, 2); i++)
                 {
