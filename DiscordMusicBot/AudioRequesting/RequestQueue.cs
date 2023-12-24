@@ -106,7 +106,7 @@ namespace DiscordMusicBot.AudioRequesting
 
             Video video = _videos[0];
             AddToHistory(video);
-            await _floatingMessage.UpdateAsync(string.Format("Playing {0}\n", video.Header.Title));
+            await _floatingMessage.UpdateAsync(string.Format("Loading {0}\n", video.Header.Title));
             await _audioStreamer.JoinAndPlayAsync(video, args.PcmStream, GetRequesterIds);
         }
 
@@ -149,9 +149,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             if (_videos.Count == 0)
             {
-                // TODO write message AFTER skip message
-                await _notificationService.SendAsync(CommandStatus.Info, "no videos left!!!");
-                await _floatingMessage.UpdateAsync(null);
+                await _floatingMessage.UpdateAsync("no videos left!!!");
                 _audioStreamer.RequestLeave();
             }
         }
