@@ -72,6 +72,8 @@ namespace DiscordMusicBot
             guildWatcher.OnCommandAsync(this, args).Wait();
             bot.CommandRecieved += guildWatcher.OnCommandAsync;
 
+            Task.Run(services.GetRequiredService<IFloatingMessageController>().RunAsync);
+
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;
         }
