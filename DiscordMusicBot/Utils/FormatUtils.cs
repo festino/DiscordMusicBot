@@ -1,4 +1,6 @@
-﻿namespace DiscordMusicBot.Utils
+﻿using Discord;
+
+namespace DiscordMusicBot.Utils
 {
     public static class FormatUtils
     {
@@ -7,7 +9,7 @@
             string formatStr = fullTime.TotalHours >= 1.0 ? @"hh\:mm\:ss" : @"mm\:ss";
             string currentTimeStr = currentTime.ToString(formatStr);
             string fullTimeStr = fullTime.ToString(formatStr);
-            return $"{currentTimeStr} / {fullTimeStr}";
+            return Format.Code($"{currentTimeStr} / {fullTimeStr}");
         }
     }
 }
