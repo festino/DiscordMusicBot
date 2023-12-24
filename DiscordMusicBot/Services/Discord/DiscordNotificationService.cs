@@ -92,7 +92,6 @@ namespace DiscordMusicBot.Services.Discord
 
         private static string RestrictMessage(string message)
         {
-            message = Format.Sanitize(message);
             if (message.Length > MaxMessageLength)
             {
                 message = message[..(MaxMessageLength - 3)] + "...";
