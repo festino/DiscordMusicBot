@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
@@ -23,12 +24,12 @@ namespace DiscordMusicBot.Services.Discord
             _client = bot.Client;
         }
 
-        public async Task SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null)
+        public async Task<DiscordMessageInfo?> SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null)
         {
-            await SendMessageAsync(messageInfo, message);
+            return await SendMessageAsync(messageInfo, message);
         }
 
-        public async Task SuggestAsync(string message, SuggestOption[] options, DiscordMessageInfo? messageInfo = null)
+        public async Task<DiscordMessageInfo?> SuggestAsync(string message, SuggestOption[] options, DiscordMessageInfo? messageInfo = null)
         {
             var builder = new ComponentBuilder();
             foreach (SuggestOption option in options)
@@ -36,17 +37,37 @@ namespace DiscordMusicBot.Services.Discord
                 builder = builder.WithButton(option.Caption, option.MessageOnClick, ButtonStyle.Secondary);
             }
 
-            message = RestrictMessage(message);
-            await SendMessageAsync(messageInfo, message, builder.Build());
+            return await SendMessageAsync(messageInfo, message, builder.Build());
         }
 
-        private async Task SendMessageAsync(DiscordMessageInfo? messageInfo, string message, MessageComponent? components = null)
+        public async Task DeleteAsync(DiscordMessageInfo messageInfo)
         {
-            var channel = await GetMessageChannelAsync(messageInfo);
-            if (channel is null) return;
+            IChannel channel = await _client.GetChannelAsync(messageInfo.ChannelId);
+            if (channel is not ISocketMessageChannel messageChannel)
+                return;
+
+            await messageChannel.DeleteMessageAsync(messageInfo.MessageId);
+        }
+
+        public async Task EditAsync(CommandStatus status, string message, DiscordMessageInfo messageInfo)
+        {
+            IChannel channel = await _client.GetChannelAsync(messageInfo.ChannelId);
+            if (channel is not ISocketMessageChannel messageChannel)
+                return;
 
             message = RestrictMessage(message);
-            await channel.SendMessageAsync(message, components: components);
+            await messageChannel.ModifyMessageAsync(messageInfo.MessageId, (properties) => properties.Content = message);
+        }
+
+        private async Task<DiscordMessageInfo?> SendMessageAsync(DiscordMessageInfo? messageInfo, string message, MessageComponent? components = null)
+        {
+            var channel = await GetMessageChannelAsync(messageInfo);
+            if (channel is null) return null;
+
+            message = RestrictMessage(message);
+            RestUserMessage userMessage = await channel.SendMessageAsync(message, components: components);
+            IUser user = userMessage.Author;
+            return new DiscordMessageInfo(user.GlobalName, user.Id, 0UL, userMessage.Channel.Id, userMessage.Id);
         }
 
         private async Task<ISocketMessageChannel?> GetMessageChannelAsync(DiscordMessageInfo? messageInfo)
@@ -69,7 +90,7 @@ namespace DiscordMusicBot.Services.Discord
             return messageChannel;
         }
 
-        private string RestrictMessage(string message)
+        private static string RestrictMessage(string message)
         {
             message = Format.Sanitize(message);
             if (message.Length > MaxMessageLength)
