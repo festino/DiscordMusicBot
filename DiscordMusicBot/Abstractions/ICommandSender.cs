@@ -1,5 +1,4 @@
 ﻿using AsyncEvent;
-using DiscordMusicBot.Services.Discord;
 
 namespace DiscordMusicBot.Abstractions
 {

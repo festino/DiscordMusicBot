@@ -1,4 +1,4 @@
-﻿using DiscordMusicBot.Services.Discord;
+﻿using DiscordMusicBot.Abstractions;
 
 namespace DiscordMusicBot.Commands
 {

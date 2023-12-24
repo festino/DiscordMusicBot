@@ -1,6 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
-using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Youtube.Data;
 
 namespace DiscordMusicBot.Commands.Executors

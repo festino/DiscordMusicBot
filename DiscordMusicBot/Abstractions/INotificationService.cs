@@ -1,6 +1,4 @@
-﻿using DiscordMusicBot.Services.Discord;
-
-namespace DiscordMusicBot.Abstractions
+﻿namespace DiscordMusicBot.Abstractions
 {
     public interface INotificationService
     {

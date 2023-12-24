@@ -1,6 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
-using DiscordMusicBot.Services.Discord;
 using Serilog;
 using static DiscordMusicBot.Abstractions.IAudioDownloader;
 using static DiscordMusicBot.Abstractions.IAudioStreamer;
