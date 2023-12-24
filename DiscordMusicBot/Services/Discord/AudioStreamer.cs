@@ -48,7 +48,7 @@ namespace DiscordMusicBot.AudioRequesting
             _client = bot.Client;
         }
 
-        public AudioInfo? GetCurrentTime()
+        public AudioInfo? GetPlaybackInfo()
         {
             if (_state != PlaybackState.Playing && _state != PlaybackState.Paused)
                 return null;

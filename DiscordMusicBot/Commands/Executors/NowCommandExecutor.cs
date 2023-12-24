@@ -31,7 +31,7 @@ namespace DiscordMusicBot.Commands.Executors
             else
             {
                 TimeSpan fullTime = videos[0].Header.Duration;
-                AudioInfo? info = _streamer.GetCurrentTime();
+                AudioInfo? info = _streamer.GetPlaybackInfo();
                 TimeSpan currentTime = TimeSpan.Zero;
                 if (info is not null && info.Video == videos[0])
                 {

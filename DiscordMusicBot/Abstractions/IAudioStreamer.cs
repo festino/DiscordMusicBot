@@ -19,6 +19,6 @@ namespace DiscordMusicBot.Abstractions
         Task ResumeAsync();
         Task StopAsync();
 
-        AudioInfo? GetCurrentTime();
+        AudioInfo? GetPlaybackInfo();
     }
 }
