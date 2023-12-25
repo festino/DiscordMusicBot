@@ -12,6 +12,12 @@ namespace DiscordMusicBot.Utils
             return Format.Code($"{currentTimeStr} / {fullTimeStr}");
         }
 
+        public static string FormatTimestamp(TimeSpan timestamp)
+        {
+            string formatStr = timestamp.TotalHours >= 1.0 ? @"hh\:mm\:ss" : @"mm\:ss";
+            return timestamp.ToString(formatStr); ;
+        }
+
         public static string FormatProgressBar(double progress, int cellsCount, string cellStates)
         {
             if (cellsCount <= 0)

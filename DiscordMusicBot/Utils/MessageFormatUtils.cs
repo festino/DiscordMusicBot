@@ -20,5 +20,10 @@ namespace DiscordMusicBot.Utils
 
             return string.Format("Playing {0}\n{1} {2}", audioInfo.Video.Header.Title, timeBar, timeStr);
         }
+
+        public static string FormatLabel(VideoHeader header)
+        {
+            return "(" + FormatUtils.FormatTimestamp(header.Duration) + ") " + header.Title;
+        }
     }
 }

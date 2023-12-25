@@ -1,6 +1,7 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Services.Youtube.Data;
+using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
 {
@@ -43,7 +44,7 @@ namespace DiscordMusicBot.Commands.Executors
             Tuple<string, VideoHeader>[] options = await _youtubeDataProvider.Search(query);
             SuggestOption[] topOptions = options
                 .Take(SearchResultCount)
-                .Select(t => new SuggestOption(t.Item2.Title, $"play youtu.be/{t.Item1}"))
+                .Select(t => new SuggestOption(MessageFormatUtils.FormatLabel(t.Item2), $"play youtu.be/{t.Item1}"))
                 .ToArray();
 
             if (topOptions.Length == 0)
