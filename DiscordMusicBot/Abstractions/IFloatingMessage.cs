@@ -2,8 +2,11 @@
 {
     public interface IFloatingMessage
     {
-        Task UpdateAsync(string? message);
-        Task OnMessageAsync(DiscordMessageInfo messageInfo, string content);
+        void Update(string? message);
+        void Update(Func<string?> messageFactory);
+
+        void OnMessage(DiscordMessageInfo messageInfo, string content);
+
         Task RunAsync();
     }
 }

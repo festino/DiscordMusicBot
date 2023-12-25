@@ -13,7 +13,9 @@ namespace DiscordMusicBot.Services.Discord
         private readonly INotificationService _notificationService;
 
         private DiscordMessageInfo? _messageInfo = null;
+
         private string? _message = null;
+        private Func<string?>? _messageFactory = null;
 
         private bool _isEdited = false;
         private bool _isLast = true;
@@ -30,6 +32,10 @@ namespace DiscordMusicBot.Services.Discord
             {
                 var timeStart = DateTime.Now;
 
+                if (_messageFactory is not null)
+                {
+                    UpdateMessage(_messageFactory());
+                }
                 await TickAsync();
 
                 int msPassed = (int)(DateTime.Now - timeStart).TotalMilliseconds;
@@ -38,15 +44,18 @@ namespace DiscordMusicBot.Services.Discord
             }
         }
 
-        public async Task UpdateAsync(string? message)
+        public void Update(string? message)
         {
-            if (message == _message) return;
-
-            _message = message;
-            _isEdited = true;
+            _messageFactory = null;
+            UpdateMessage(message);
         }
 
-        public async Task OnMessageAsync(DiscordMessageInfo messageInfo, string content)
+        public void Update(Func<string?> messageFactory)
+        {
+            _messageFactory = messageFactory;
+        }
+
+        public void OnMessage(DiscordMessageInfo messageInfo, string content)
         {
             if (_messageInfo is null || _message is null) return;
             if (messageInfo.ChannelId != _messageInfo.ChannelId) return;
@@ -55,6 +64,14 @@ namespace DiscordMusicBot.Services.Discord
             if (content == _message) return;
 
             _isLast = false;
+        }
+
+        private void UpdateMessage(string? message)
+        {
+            if (message == _message) return;
+
+            _message = message;
+            _isEdited = true;
         }
 
         private async Task TickAsync()

@@ -1,5 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
+using DiscordMusicBot.Utils;
 using Serilog;
 using static DiscordMusicBot.Abstractions.IAudioDownloader;
 using static DiscordMusicBot.Abstractions.IAudioStreamer;
@@ -94,7 +95,7 @@ namespace DiscordMusicBot.AudioRequesting
             var videos = _videos;
             _videos = new List<Video>();
 
-            await TryLeaveAsync();
+            TryLeave();
             _logger.Here().Information("Queue was cleared");
             return videos;
         }
@@ -106,7 +107,7 @@ namespace DiscordMusicBot.AudioRequesting
 
             Video video = _videos[0];
             AddToHistory(video);
-            await _floatingMessage.UpdateAsync(string.Format("Loading {0}\n", video.Header.Title));
+            _floatingMessage.Update(() => MessageFormatUtils.FormatPlayingMessage(_audioStreamer.GetPlaybackInfo()));
             await _audioStreamer.JoinAndPlayAsync(video, args.PcmStream, GetRequesterIds);
         }
 
@@ -140,16 +141,16 @@ namespace DiscordMusicBot.AudioRequesting
             if (index == 0)
                 await _audioStreamer.StopAsync();
 
-            await TryLeaveAsync();
+            TryLeave();
             TryRequestDownload(index);
             return video;
         }
 
-        private async Task TryLeaveAsync()
+        private void TryLeave()
         {
             if (_videos.Count == 0)
             {
-                await _floatingMessage.UpdateAsync("no videos left!!!");
+                _floatingMessage.Update("no videos left!!!");
                 _audioStreamer.RequestLeave();
             }
         }
