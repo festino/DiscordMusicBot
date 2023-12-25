@@ -74,6 +74,8 @@ namespace DiscordMusicBot
             bot.CommandRecieved += guildWatcher.OnCommandAsync;
 
             var floatingMessage = services.GetRequiredService<IFloatingMessage>();
+            bot.MessageRecieved += async (s, args) => await floatingMessage.OnMessageAsync(args.MessageInfo, args.Content);
+
             var audioTimer = services.GetRequiredService<IAudioTimer>();
             audioTimer.TimeUpdated += async (s, args) => await floatingMessage.UpdateAsync(MessageFormatUtils.FormatPlayingMessage(args.AudioInfo));
             Task.Run(audioTimer.RunAsync);
