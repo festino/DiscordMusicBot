@@ -11,6 +11,7 @@ namespace DiscordMusicBot.Services.Discord
         private readonly INotificationService _notificationService;
 
         private DiscordMessageInfo? _messageInfo = null;
+        private string? _message;
 
         public FloatingMessage(ILogger logger, INotificationService notificationService)
         {
@@ -20,6 +21,9 @@ namespace DiscordMusicBot.Services.Discord
 
         public async Task UpdateAsync(string? message)
         {
+            if (message == _message) return;
+
+            _message = message;
             if (message is null)
             {
                 await DeleteMessageAsync();
@@ -34,6 +38,18 @@ namespace DiscordMusicBot.Services.Discord
             {
                 await _notificationService.EditAsync(CommandStatus.Info, message, _messageInfo);
             }
+        }
+
+        public async Task OnMessageAsync(DiscordMessageInfo messageInfo, string content)
+        {
+            if (_messageInfo is null || _message is null) return;
+            if (messageInfo.ChannelId != _messageInfo.ChannelId) return;
+            if (messageInfo.GuildId != _messageInfo.GuildId) return;
+            if (messageInfo.MessageId == _messageInfo.MessageId) return;
+            if (content == _message) return;
+
+            await _notificationService.DeleteAsync(_messageInfo);
+            _messageInfo = await _notificationService.SendAsync(CommandStatus.Info, _message);
         }
 
         private async Task DeleteMessageAsync()
