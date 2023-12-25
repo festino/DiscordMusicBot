@@ -34,8 +34,10 @@ namespace DiscordMusicBot.Services.Discord
             var builder = new ComponentBuilder();
             foreach (SuggestOption option in options)
             {
+                ActionRowBuilder rowBuilder = new ActionRowBuilder();
                 string label = RestrictButtonLabel(option.Caption);
-                builder = builder.WithButton(label, option.MessageOnClick, ButtonStyle.Secondary);
+                rowBuilder = rowBuilder.WithButton(label, option.MessageOnClick, ButtonStyle.Secondary);
+                builder.AddRow(rowBuilder);
             }
 
             return await SendMessageAsync(messageInfo, message, builder.Build());
