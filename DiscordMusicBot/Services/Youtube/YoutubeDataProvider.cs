@@ -27,14 +27,24 @@ namespace DiscordMusicBot.Services.Youtube
             searchListRequest.Q = query;
             searchListRequest.MaxResults = MaxResults;
 
-            List<Tuple<string, VideoHeader>> result = new();
             var searchListResponse = await searchListRequest.ExecuteAsync();
+            // search Resource does not contain duration
+            List<string> videoIds = new();
             foreach (var searchResult in searchListResponse.Items)
             {
                 if (searchResult.Id.Kind != "youtube#video")
                     continue;
 
-                result.Add(Tuple.Create(searchResult.Id.VideoId, GetHeader(searchResult)));
+                videoIds.Add(searchResult.Id.VideoId);
+            }
+            VideoHeader?[] videos = await GetHeaders(videoIds.ToArray());
+
+            List<Tuple<string, VideoHeader>> result = new();
+            for (int i = 0; i < videos.Length; i++)
+            {
+                VideoHeader? header = videos[i];
+                if (header is not null)
+                    result.Add(Tuple.Create(videoIds[i], header));
             }
             return result.ToArray();
         }
@@ -126,14 +136,6 @@ namespace DiscordMusicBot.Services.Youtube
                 video.Snippet.ChannelTitle,
                 video.Snippet.Title,
                 XmlConvert.ToTimeSpan(video.ContentDetails.Duration)
-            );
-        }
-        private static VideoHeader GetHeader(SearchResult video)
-        {
-            return new VideoHeader(
-                video.Snippet.ChannelTitle,
-                video.Snippet.Title,
-                new TimeSpan(-1)
             );
         }
 
