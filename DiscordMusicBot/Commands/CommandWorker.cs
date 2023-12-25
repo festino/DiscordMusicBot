@@ -79,6 +79,7 @@ namespace DiscordMusicBot
             var audioTimer = services.GetRequiredService<IAudioTimer>();
             audioTimer.TimeUpdated += async (s, args) => await floatingMessage.UpdateAsync(MessageFormatUtils.FormatPlayingMessage(args.AudioInfo));
             Task.Run(audioTimer.RunAsync);
+            Task.Run(floatingMessage.RunAsync);
 
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;
