@@ -3,6 +3,7 @@ using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
 using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord;
+using DiscordMusicBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using static DiscordMusicBot.Abstractions.ICommandSender;
@@ -72,7 +73,10 @@ namespace DiscordMusicBot
             guildWatcher.OnCommandAsync(this, args).Wait();
             bot.CommandRecieved += guildWatcher.OnCommandAsync;
 
-            Task.Run(services.GetRequiredService<IFloatingMessageController>().RunAsync);
+            var floatingMessage = services.GetRequiredService<IFloatingMessage>();
+            var audioTimer = services.GetRequiredService<IAudioTimer>();
+            audioTimer.TimeUpdated += async (s, args) => await floatingMessage.UpdateAsync(MessageFormatUtils.FormatPlayingMessage(args.AudioInfo));
+            Task.Run(audioTimer.RunAsync);
 
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;

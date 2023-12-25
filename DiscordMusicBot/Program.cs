@@ -60,7 +60,7 @@ namespace DiscordMusicBot
             services.AddScoped<IGuildWatcher, DiscordGuildWatcher>();
             services.AddScoped<INotificationService, DiscordNotificationService>();
             services.AddScoped<IFloatingMessage, FloatingMessage>();
-            services.AddScoped<IFloatingMessageController, FloatingMessageController>();
+            services.AddScoped<IAudioTimer, AudioTimer>();
             services.AddScoped<IAudioStreamer, AudioStreamer>();
             services.AddScoped<RequestQueue>();
 
