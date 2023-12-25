@@ -4,5 +4,6 @@
     {
         Task UpdateAsync(string? message);
         Task OnMessageAsync(DiscordMessageInfo messageInfo, string content);
+        Task RunAsync();
     }
 }
