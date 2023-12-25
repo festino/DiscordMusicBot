@@ -1,6 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
-using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
