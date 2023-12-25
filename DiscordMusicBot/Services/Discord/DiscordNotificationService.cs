@@ -10,6 +10,7 @@ namespace DiscordMusicBot.Services.Discord
     public class DiscordNotificationService : INotificationService
     {
         private const int MaxMessageLength = 2000;
+        private const int MaxLabelLength = 80;
 
         private readonly ILogger _logger;
 
@@ -34,7 +35,8 @@ namespace DiscordMusicBot.Services.Discord
             var builder = new ComponentBuilder();
             foreach (SuggestOption option in options)
             {
-                builder = builder.WithButton(option.Caption, option.MessageOnClick, ButtonStyle.Secondary);
+                string label = RestrictButtonLabel(option.Caption);
+                builder = builder.WithButton(label, option.MessageOnClick, ButtonStyle.Secondary);
             }
 
             return await SendMessageAsync(messageInfo, message, builder.Build());
@@ -92,9 +94,19 @@ namespace DiscordMusicBot.Services.Discord
 
         private static string RestrictMessage(string message)
         {
-            if (message.Length > MaxMessageLength)
+            return RestrictLength(message, MaxMessageLength);
+        }
+
+        private static string RestrictButtonLabel(string message)
+        {
+            return RestrictLength(message, MaxLabelLength);
+        }
+
+        private static string RestrictLength(string message, int maxLength)
+        {
+            if (message.Length > maxLength)
             {
-                message = message[..(MaxMessageLength - 3)] + "...";
+                message = message[..(maxLength - 3)] + "...";
             }
             return message;
         }
