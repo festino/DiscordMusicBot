@@ -60,12 +60,26 @@ namespace DiscordMusicBot.Services.Discord
                 return;
 
             text = text[_commandPrefix.Length..];
-            await HandleCommandAsync(text, message.Author, message.Id, message.Channel);
+            try
+            {
+                await HandleCommandAsync(text, message.Author, message.Id, message.Channel);
+            }
+            catch (Exception ex)
+            {
+                _logger.Here().Error("Unhandled exception!\n{Exception}", ex);
+            }
         }
 
         private async Task HandleButtonAsync(SocketMessageComponent component)
         {
-            await HandleCommandAsync(component.Data.CustomId, component.User, component.Message.Id, component.Message.Channel);
+            try
+            {
+                await HandleCommandAsync(component.Data.CustomId, component.User, component.Message.Id, component.Message.Channel);
+            }
+            catch (Exception ex)
+            {
+                _logger.Here().Error("Unhandled exception!\n{Exception}", ex);
+            }
             await component.DeferAsync();
             await component.Message.DeleteAsync();
         }
