@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
@@ -66,10 +65,14 @@ namespace DiscordMusicBot.Services.Discord
             var channel = await GetMessageChannelAsync(messageInfo);
             if (channel is null) return null;
 
+            var guildChannel = channel as SocketGuildChannel;
+            var guildId = guildChannel?.Guild.Id;
+            if (guildId is null) return null;
+
             message = RestrictMessage(message);
-            RestUserMessage userMessage = await channel.SendMessageAsync(message, components: components);
+            IUserMessage userMessage = await channel.SendMessageAsync(message, components: components);
             IUser user = userMessage.Author;
-            return new DiscordMessageInfo(user.GlobalName, user.Id, 0UL, userMessage.Channel.Id, userMessage.Id);
+            return new DiscordMessageInfo(user.GlobalName, user.Id, (ulong)guildId, userMessage.Channel.Id, userMessage.Id);
         }
 
         private async Task<ISocketMessageChannel?> GetMessageChannelAsync(DiscordMessageInfo? messageInfo)
