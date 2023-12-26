@@ -1,4 +1,5 @@
 ﻿using Discord;
+using DiscordMusicBot.Abstractions;
 
 namespace DiscordMusicBot.Utils
 {
@@ -34,6 +35,17 @@ namespace DiscordMusicBot.Utils
             string completedCells = new string(cellStates[^1], completedCellsCount);
             string emptyCells = new string(cellStates[0], cellsCount - completedCellsCount - 1);
             return completedCells + currentCell + emptyCells;
+        }
+
+        public static string FormatVideo(VideoHeader header)
+        {
+            return header.Title;
+        }
+
+        public static string FormatVideos(IEnumerable<VideoHeader> headers)
+        {
+            // TODO add enumeration, skip middle videos
+            return string.Join('\n', headers.Select(h => FormatVideo(h)));
         }
     }
 }
