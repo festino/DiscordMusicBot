@@ -1,10 +1,14 @@
 ﻿using Discord;
 using DiscordMusicBot.Abstractions;
+using System.Text;
 
 namespace DiscordMusicBot.Utils
 {
     public static class FormatUtils
     {
+        private static readonly int BeginningHeadersCount = 5;
+        private static readonly int EndingHeadersCount = 5;
+
         public static string FormatTimestamps(TimeSpan currentTime, TimeSpan fullTime)
         {
             string formatStr = fullTime.TotalHours >= 1.0 ? @"hh\:mm\:ss" : @"mm\:ss";
@@ -42,10 +46,30 @@ namespace DiscordMusicBot.Utils
             return header.Title;
         }
 
-        public static string FormatVideos(IEnumerable<VideoHeader> headers)
+        public static string FormatVideos(IReadOnlyList<VideoHeader> headers)
         {
-            // TODO add enumeration, skip middle videos
-            return string.Join('\n', headers.Select(h => FormatVideo(h)));
+            StringBuilder sb = new();
+            if (headers.Count < BeginningHeadersCount + 1 + EndingHeadersCount)
+            {
+                AppendConsequentVideos(sb, headers, 0, headers.Count);
+                return sb.ToString();
+            }
+
+            AppendConsequentVideos(sb, headers, 0, BeginningHeadersCount);
+            sb.Append("\n...\n");
+            AppendConsequentVideos(sb, headers, headers.Count - EndingHeadersCount, headers.Count);
+            return sb.ToString();
+        }
+
+        private static void AppendConsequentVideos(StringBuilder sb, IReadOnlyList<VideoHeader> headers, int start, int end)
+        {
+            for (int i = start; i < end; i++)
+            {
+                if (i != start)
+                    sb.Append('\n');
+
+                sb.Append(string.Format("{0}. {1}", i + 1, FormatVideo(headers[i])));
+            }
         }
     }
 }
