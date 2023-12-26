@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Discord.Volume;
+using DiscordMusicBot.Utils;
 using Serilog;
 using static DiscordMusicBot.Abstractions.IAudioStreamer;
 
@@ -16,6 +17,8 @@ namespace DiscordMusicBot.AudioRequesting
         private const int VoiceChannelTimeoutMs = 5 * 60 * 1000;
 
         private readonly ILogger _logger;
+
+        private readonly IFloatingMessage _floatingMessage;
 
         private readonly DiscordSocketClient _client;
         private ulong? _guildId = null;
@@ -41,10 +44,11 @@ namespace DiscordMusicBot.AudioRequesting
             set => _guildId = value;
         }
 
-        public AudioStreamer(ILogger logger, DiscordSocketClient client)
+        public AudioStreamer(ILogger logger, DiscordSocketClient client, IFloatingMessage floatingMessage)
         {
             _logger = logger;
             _client = client;
+            _floatingMessage = floatingMessage;
         }
 
         public AudioInfo? GetPlaybackInfo()
@@ -68,7 +72,9 @@ namespace DiscordMusicBot.AudioRequesting
             }
 
             CancellationToken cancellationToken = _playCancellationSource.Token;
+            _floatingMessage.Update(() => MessageFormatUtils.FormatJoiningMessage());
             await JoinAsync(getRequesterIds, cancellationToken);
+            _floatingMessage.Update(() => MessageFormatUtils.FormatPlayingMessage(GetPlaybackInfo()));
             await StartNewAsync(video, pcmStream, cancellationToken);
         }
 

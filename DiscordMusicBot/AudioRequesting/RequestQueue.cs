@@ -1,6 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
-using DiscordMusicBot.Utils;
 using Serilog;
 using static DiscordMusicBot.Abstractions.IAudioDownloader;
 using static DiscordMusicBot.Abstractions.IAudioStreamer;
@@ -107,7 +106,6 @@ namespace DiscordMusicBot.AudioRequesting
 
             Video video = _videos[0];
             AddToHistory(video);
-            _floatingMessage.Update(() => MessageFormatUtils.FormatPlayingMessage(_audioStreamer.GetPlaybackInfo()));
             await _audioStreamer.JoinAndPlayAsync(video, args.PcmStream, GetRequesterIds);
         }
 

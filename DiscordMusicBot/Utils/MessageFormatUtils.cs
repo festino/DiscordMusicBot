@@ -11,14 +11,16 @@ namespace DiscordMusicBot.Utils
         private readonly static int MaxLoadingDots = 3;
         private static int LoadingDotsCount = MaxLoadingDots;
 
-        public static string? FormatPlayingMessage(AudioInfo? audioInfo)
+        public static string FormatJoiningMessage()
+        {
+            return string.Format("Joining voice channel{0}", GetLoadingDots());
+        }
+
+        public static string FormatPlayingMessage(AudioInfo? audioInfo)
         {
             if (audioInfo is null)
             {
-                if (++LoadingDotsCount > MaxLoadingDots)
-                    LoadingDotsCount = MinLoadingDots;
-
-                return "Loading" + new string('.', LoadingDotsCount);
+                return string.Format("Loading{0}", GetLoadingDots());
             }
 
             double progress = audioInfo.CurrentTime.TotalSeconds / audioInfo.Video.Header.Duration.TotalSeconds;
@@ -33,6 +35,14 @@ namespace DiscordMusicBot.Utils
         public static string FormatLabel(VideoHeader header)
         {
             return string.Format("({1}) {0}", header.Title, FormatUtils.FormatTimestamp(header.Duration));
+        }
+
+        private static string GetLoadingDots()
+        {
+            if (++LoadingDotsCount > MaxLoadingDots)
+                LoadingDotsCount = MinLoadingDots;
+
+            return new string('.', LoadingDotsCount);
         }
     }
 }
