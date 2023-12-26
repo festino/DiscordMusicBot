@@ -1,4 +1,6 @@
-﻿using DiscordMusicBot.Abstractions;
+﻿using Discord;
+using Discord.WebSocket;
+using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
 using DiscordMusicBot.Commands;
 using DiscordMusicBot.Commands.Executors;
@@ -39,10 +41,20 @@ namespace DiscordMusicBot
             );
             Config config = new ConfigBuilder(reader).Build();
 
+            var socketConfig = new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.Guilds
+                               | GatewayIntents.GuildVoiceStates
+                               | GatewayIntents.GuildMessages
+                               | GatewayIntents.MessageContent
+            };
+            DiscordSocketClient client = new(socketConfig);
+
             ServiceCollection services = new();
             services.AddSingleton(logger);
             services.AddSingleton<IDiscordConfig>(config);
             services.AddSingleton<IYoutubeConfig>(config);
+            services.AddSingleton(client);
             services.AddSingleton<DiscordBot>();
             services.AddSingleton<ICommandWorker, CommandWorker>();
             services.AddSingleton<IAudioDownloader, YoutubeAudioDownloader>();

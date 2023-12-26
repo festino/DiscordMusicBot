@@ -4,7 +4,6 @@ using Discord.Audio;
 using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
-using DiscordMusicBot.Services.Discord;
 using DiscordMusicBot.Services.Discord.Volume;
 using Serilog;
 using static DiscordMusicBot.Abstractions.IAudioStreamer;
@@ -42,10 +41,10 @@ namespace DiscordMusicBot.AudioRequesting
             set => _guildId = value;
         }
 
-        public AudioStreamer(ILogger logger, DiscordBot bot)
+        public AudioStreamer(ILogger logger, DiscordSocketClient client)
         {
             _logger = logger;
-            _client = bot.Client;
+            _client = client;
         }
 
         public AudioInfo? GetPlaybackInfo()

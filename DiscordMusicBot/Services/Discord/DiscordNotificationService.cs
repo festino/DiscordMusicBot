@@ -17,11 +17,11 @@ namespace DiscordMusicBot.Services.Discord
 
         private readonly IGuildWatcher _guildWatcher;
 
-        public DiscordNotificationService(ILogger logger, IGuildWatcher guildWatcher, DiscordBot bot)
+        public DiscordNotificationService(ILogger logger, IGuildWatcher guildWatcher, DiscordSocketClient client)
         {
             _logger = logger;
             _guildWatcher = guildWatcher;
-            _client = bot.Client;
+            _client = client;
         }
 
         public async Task<DiscordMessageInfo?> SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null)

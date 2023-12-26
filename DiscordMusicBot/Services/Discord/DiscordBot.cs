@@ -19,16 +19,9 @@ namespace DiscordMusicBot.Services.Discord
         public event AsyncEventHandler<CommandRecievedArgs>? CommandRecieved;
         public event AsyncEventHandler<MessageRecievedArgs>? MessageRecieved;
 
-        public DiscordSocketClient Client => _client;
-
-        public DiscordBot(ILogger logger, IDiscordConfig config)
+        public DiscordBot(ILogger logger, IDiscordConfig config, DiscordSocketClient client)
         {
-            var socketConfig = new DiscordSocketConfig();
-            socketConfig.GatewayIntents = GatewayIntents.Guilds
-                | GatewayIntents.GuildVoiceStates
-                | GatewayIntents.GuildMessages
-                | GatewayIntents.MessageContent;
-            _client = new DiscordSocketClient(socketConfig);
+            _client = client;
             _client.Log += Log;
             _client.MessageReceived += HandleMessageAsync;
             _client.ButtonExecuted += HandleButtonAsync;
