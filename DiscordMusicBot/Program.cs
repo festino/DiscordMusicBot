@@ -71,6 +71,7 @@ namespace DiscordMusicBot
 
             services.AddScoped<IGuildWatcher, DiscordGuildWatcher>();
             services.AddScoped<IMessageSender, DiscordMessageSender>();
+            services.AddScoped<ISuggestCleaner, SuggestCleaner>();
             services.AddScoped<IFloatingMessage, FloatingMessage>();
             services.AddScoped<IAudioStreamer, AudioStreamer>();
             services.AddScoped<RequestQueue>();

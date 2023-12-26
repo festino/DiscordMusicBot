@@ -76,6 +76,11 @@ namespace DiscordMusicBot
             bot.MessageRecieved += async (s, args) => floatingMessage.OnMessage(args.MessageInfo, args.Content);
             Task.Run(floatingMessage.RunAsync);
 
+            var suggestCleaner = services.GetRequiredService<ISuggestCleaner>();
+            var messageSender = services.GetRequiredService<IMessageSender>();
+            bot.CommandRecieved += async (s, args) => await suggestCleaner.OnCommandAsync(args.MessageInfo);
+            messageSender.SuggestSent += async (s, args) => await suggestCleaner.OnSuggestAsync(args);
+
             _executors.Add(guildId, guildExecutors);
             return guildExecutors;
         }
