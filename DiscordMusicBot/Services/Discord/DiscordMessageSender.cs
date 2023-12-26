@@ -1,8 +1,10 @@
-﻿using Discord;
+﻿using AsyncEvent;
+using Discord;
 using Discord.WebSocket;
 using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.Extensions;
 using Serilog;
+using static DiscordMusicBot.Abstractions.IMessageSender;
 
 namespace DiscordMusicBot.Services.Discord
 {
@@ -16,6 +18,8 @@ namespace DiscordMusicBot.Services.Discord
         private readonly DiscordSocketClient _client;
 
         private readonly IGuildWatcher _guildWatcher;
+
+        public event AsyncEventHandler<SuggestSentArgs>? SuggestSent;
 
         public DiscordMessageSender(ILogger logger, IGuildWatcher guildWatcher, DiscordSocketClient client)
         {
@@ -40,7 +44,14 @@ namespace DiscordMusicBot.Services.Discord
                 builder.AddRow(rowBuilder);
             }
 
-            return await SendMessageAsync(messageInfo, message, builder.Build());
+            DiscordMessageInfo? suggestInfo = await SendMessageAsync(messageInfo, message, builder.Build());
+            if (suggestInfo is not null)
+            {
+                Task? task = SuggestSent?.InvokeAsync(this, new SuggestSentArgs(suggestInfo, messageInfo));
+                if (task is not null)
+                    await task;
+            }
+            return suggestInfo;
         }
 
         public async Task DeleteAsync(DiscordMessageInfo messageInfo)
