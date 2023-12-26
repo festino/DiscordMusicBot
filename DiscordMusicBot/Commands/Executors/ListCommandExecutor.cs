@@ -19,13 +19,14 @@ namespace DiscordMusicBot.Commands.Executors
             var list = _queue.GetVideos();
             if (list.Count == 0)
             {
-                await _messageSender.SendAsync(CommandStatus.Info, "queue is empty", messageInfo);
+                string message1 = "queue is empty";
+                await _messageSender.SendAsync(CommandStatus.Info, message1, messageInfo);
                 return;
             }
 
             var fullTime = TimeSpan.FromSeconds(list.Sum(v => v.Header.Duration.TotalSeconds));
-            string message = $"{list.Count} songs, {fullTime}\n";
-            message += string.Join("\n", list.Select(v => v.Header.Title));
+            string videoListStr = string.Join("\n", list.Select(v => v.Header.Title));
+            string message = string.Format("{0} songs, {1}\n{2}", list.Count, fullTime, videoListStr);
             await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }

@@ -26,7 +26,8 @@ namespace DiscordMusicBot.Commands.Executors
             string[] argsStrs = args.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (argsStrs.Length == 0)
             {
-                await _messageSender.SendAsync(CommandStatus.Error, "no argument", messageInfo);
+                string message = "I can't get it!\nTry \"f!play youtu.be/dQw4w9WgXcQ\" or query \"f!play gangnam style\"";
+                await _messageSender.SendAsync(CommandStatus.Error, message, messageInfo);
                 return;
             }
 
@@ -50,12 +51,14 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (suggestOptions.Length == 0)
             {
-                await _messageSender.SendAsync(CommandStatus.Error, "no search results", messageInfo);
+                string message1 = "No search results :(";
+                await _messageSender.SendAsync(CommandStatus.Error, message1, messageInfo);
                 return;
             }
 
-            string text = "choose:\n" + string.Join(" | ", topOptions.Select(t => $"[{t.Item2.ChannelName}](https://youtu.be/{t.Item1})"));
-            await _messageSender.SuggestAsync(text, suggestOptions, messageInfo);
+            string links = string.Join(" | ", topOptions.Select(t => $"[{t.Item2.ChannelName}](https://youtu.be/{t.Item1})"));
+            string message = string.Format("Choose:\n{0}", links);
+            await _messageSender.SuggestAsync(message, suggestOptions, messageInfo);
         }
 
         private async Task AddVideos(string[] args, DiscordMessageInfo messageInfo)
@@ -79,7 +82,8 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (badArgs.Count > 0)
             {
-                await _messageSender.SendAsync(CommandStatus.Error, $"could not get ids: {string.Join(", ", badArgs)}", messageInfo);
+                string message1 = string.Format("Could not get youtube ids from:\n{0}", string.Join(", ", badArgs));
+                await _messageSender.SendAsync(CommandStatus.Error, message1, messageInfo);
                 return;
             }
 
@@ -97,7 +101,8 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (badIds.Count > 0)
             {
-                await _messageSender.SendAsync(CommandStatus.Error, $"there are invalid ids: {string.Join(", ", badIds)}", messageInfo);
+                string message1 = string.Format("Could not load videos:\n{0}", string.Join(", ", badIds));
+                await _messageSender.SendAsync(CommandStatus.Error, message1, messageInfo);
                 return;
             }
 
@@ -106,9 +111,13 @@ namespace DiscordMusicBot.Commands.Executors
                 _queue.Add(new Video(youtubeIds[i], headers[i], messageInfo));
             }
 
-            await _messageSender.SendAsync(CommandStatus.Info,
-                headers.Count == 1 ? $"added song {headers[0].Title}" : $"added {headers.Count} songs"
-            );
+            string message;
+            if (headers.Count == 1)
+                message = string.Format("Added song {0}", FormatUtils.FormatVideo(headers[0]));
+            else
+                message = string.Format("Added {0} songs\n{1}", headers.Count, FormatUtils.FormatVideos(headers));
+
+            await _messageSender.SendAsync(CommandStatus.Info, message);
         }
 
         private static bool HasLink(string s)

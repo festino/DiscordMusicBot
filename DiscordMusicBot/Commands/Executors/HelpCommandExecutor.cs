@@ -13,8 +13,8 @@ namespace DiscordMusicBot.Commands.Executors
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            await _messageSender.SendAsync(CommandStatus.Info, "available commands:\n" +
-                                                 "help, play, skip, undo, stop, list, now", messageInfo);
+            string message = string.Format("Available commands:\nhelp, play, skip, undo, stop, list, now");
+            await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }
 }

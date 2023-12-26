@@ -1,5 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
 {
@@ -20,18 +21,21 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (videos is null)
             {
-                await _messageSender.SendAsync(CommandStatus.Info, "could not skip video", messageInfo);
+                string message1 = "Could not skip video";
+                await _messageSender.SendAsync(CommandStatus.Info, message1, messageInfo);
                 return;
             }
 
             if (videos.Length == 1)
             {
-                await _messageSender.SendAsync(CommandStatus.Info, "skip " + videos[0].Header.Title);
+                string message1 = string.Format("Skipped {0}", FormatUtils.FormatVideo(videos[0].Header));
+                await _messageSender.SendAsync(CommandStatus.Info, message1);
                 return;
             }
 
-            await _messageSender.SendAsync(CommandStatus.Info,
-                                                 "skip\n" + string.Join("\n", videos.Select((v) => v.Header.Title)));
+            string message = string.Format("Skipped {0} videos:\n{1}",
+                                           videos.Length, FormatUtils.FormatVideos(videos.Select((v) => v.Header)));
+            await _messageSender.SendAsync(CommandStatus.Info, message);
         }
     }
 }

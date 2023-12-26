@@ -13,7 +13,8 @@ namespace DiscordMusicBot.Commands.Executors
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            await _messageSender.SendAsync(CommandStatus.Info, "unknown command", messageInfo);
+            string message = "Unknown command! Use __help__ command";
+            await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }
 }

@@ -149,7 +149,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             if (_videos.Count == 0)
             {
-                _floatingMessage.Update("no videos left!!!");
+                _floatingMessage.Update("No videos left :skull:");
                 _audioStreamer.RequestLeave();
             }
         }
