@@ -77,6 +77,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private async Task HandleButtonAsync(SocketMessageComponent component)
         {
+            await component.DeferAsync();
             DiscordMessageInfo? messageInfo = GetMessageInfo(component.Message, component.User);
             if (messageInfo is null) return;
 
@@ -88,8 +89,6 @@ namespace DiscordMusicBot.Services.Discord
             {
                 _logger.Here().Error("Unhandled exception!\n{Exception}", ex);
             }
-            await component.DeferAsync();
-            await component.Message.DeleteAsync();
         }
 
         private async Task HandleCommandAsync(string text, DiscordMessageInfo info)
