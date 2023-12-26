@@ -4,13 +4,22 @@ namespace DiscordMusicBot.Utils
 {
     public class MessageFormatUtils
     {
-        private const string CellStates = "░▒▓█";
-        private const int ProgressBarLength = 30;
+        private readonly static string CellStates = "░▒▓█";
+        private readonly static int ProgressBarLength = 30;
+
+        private readonly static int MinLoadingDots = 0;
+        private readonly static int MaxLoadingDots = 3;
+        private static int LoadingDotsCount = MaxLoadingDots;
 
         public static string? FormatPlayingMessage(AudioInfo? audioInfo)
         {
             if (audioInfo is null)
-                return "Loading" + new string('.', Random.Shared.Next(3, 5));
+            {
+                if (++LoadingDotsCount > MaxLoadingDots)
+                    LoadingDotsCount = MinLoadingDots;
+
+                return "Loading" + new string('.', LoadingDotsCount);
+            }
 
             double progress = audioInfo.CurrentTime.TotalSeconds / audioInfo.Video.Header.Duration.TotalSeconds;
             string timeBar = FormatUtils.FormatProgressBar(progress, ProgressBarLength, CellStates);
@@ -23,7 +32,7 @@ namespace DiscordMusicBot.Utils
 
         public static string FormatLabel(VideoHeader header)
         {
-            return "(" + FormatUtils.FormatTimestamp(header.Duration) + ") " + header.Title;
+            return string.Format("({1}) {0}", header.Title, FormatUtils.FormatTimestamp(header.Duration));
         }
     }
 }
