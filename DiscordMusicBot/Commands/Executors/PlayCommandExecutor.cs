@@ -42,18 +42,20 @@ namespace DiscordMusicBot.Commands.Executors
         private async Task SuggestSearch(string query, DiscordMessageInfo messageInfo)
         {
             Tuple<string, VideoHeader>[] options = await _youtubeDataProvider.Search(query);
-            SuggestOption[] topOptions = options
-                .Take(SearchResultCount)
-                .Select(t => new SuggestOption(MessageFormatUtils.FormatLabel(t.Item2), $"play youtu.be/{t.Item1}"))
+            var topOptions = options
+                .Take(SearchResultCount);
+            SuggestOption[] suggestOptions = topOptions
+                .Select(t => new SuggestOption(MessageFormatUtils.FormatLabel(t.Item2), $"play https://youtu.be/{t.Item1}"))
                 .ToArray();
 
-            if (topOptions.Length == 0)
+            if (suggestOptions.Length == 0)
             {
                 await _notificationService.SendAsync(CommandStatus.Error, "no search results", messageInfo);
                 return;
             }
 
-            await _notificationService.SuggestAsync("choose:", topOptions, messageInfo);
+            string text = "choose:\n" + string.Join(" | ", topOptions.Select(t => $"[{t.Item2.ChannelName}](https://youtu.be/{t.Item1})"));
+            await _notificationService.SuggestAsync(text, suggestOptions, messageInfo);
         }
 
         private async Task AddVideos(string[] args, DiscordMessageInfo messageInfo)
