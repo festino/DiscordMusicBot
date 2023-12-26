@@ -6,7 +6,7 @@ using Serilog;
 
 namespace DiscordMusicBot.Services.Discord
 {
-    public class DiscordNotificationService : INotificationService
+    public class DiscordMessageSender : IMessageSender
     {
         private const int MaxMessageLength = 2000;
         private const int MaxLabelLength = 80;
@@ -17,7 +17,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private readonly IGuildWatcher _guildWatcher;
 
-        public DiscordNotificationService(ILogger logger, IGuildWatcher guildWatcher, DiscordSocketClient client)
+        public DiscordMessageSender(ILogger logger, IGuildWatcher guildWatcher, DiscordSocketClient client)
         {
             _logger = logger;
             _guildWatcher = guildWatcher;

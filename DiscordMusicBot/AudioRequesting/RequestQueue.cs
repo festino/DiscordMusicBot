@@ -11,7 +11,7 @@ namespace DiscordMusicBot.AudioRequesting
     {
         private readonly ILogger _logger;
 
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
         private readonly IFloatingMessage _floatingMessage;
 
         private readonly IAudioDownloader _audioDownloader;
@@ -23,14 +23,14 @@ namespace DiscordMusicBot.AudioRequesting
 
         public RequestQueue(
             ILogger logger,
-            INotificationService notificationService,
+            IMessageSender notificationService,
             IFloatingMessage floatingMessage,
             IAudioDownloader audioDownloader,
             IAudioStreamer audioStreamer
         )
         {
             _logger = logger;
-            _notificationService = notificationService;
+            _messageSender = notificationService;
             _floatingMessage = floatingMessage;
             _audioDownloader = audioDownloader;
             _audioStreamer = audioStreamer;
@@ -114,6 +114,7 @@ namespace DiscordMusicBot.AudioRequesting
         private async Task OnLoadFailedAsync(object sender, LoadFailedArgs args)
         {
             _logger.Here().Warning("Load failed {YoutubeId}", args.YoutubeId);
+            await _messageSender.SendAsync(CommandStatus.Error, string.Format("Could not load {0}", args.YoutubeId));
             await RemoveAtAsync(0);
         }
 

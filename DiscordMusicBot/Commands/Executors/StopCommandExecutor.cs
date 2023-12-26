@@ -5,12 +5,12 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class StopCommandExecutor : ICommandExecutor
     {
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
         private readonly RequestQueue _queue;
 
-        public StopCommandExecutor(INotificationService notificationService, RequestQueue queue)
+        public StopCommandExecutor(IMessageSender notificationService, RequestQueue queue)
         {
-            _notificationService = notificationService;
+            _messageSender = notificationService;
             _queue = queue;
         }
 
@@ -19,11 +19,11 @@ namespace DiscordMusicBot.Commands.Executors
             var list = await _queue.ClearAsync();
             if (list.Count == 0)
             {
-                await _notificationService.SendAsync(CommandStatus.Info, "queue is empty", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Info, "queue is empty", messageInfo);
                 return;
             }
 
-            await _notificationService.SendAsync(CommandStatus.Info,
+            await _messageSender.SendAsync(CommandStatus.Info,
                                                  "drop queue\n" + string.Join("\n", list.Select((v) => v.Header.Title)));
         }
     }

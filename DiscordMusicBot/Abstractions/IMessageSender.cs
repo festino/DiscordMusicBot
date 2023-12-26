@@ -1,6 +1,6 @@
 ﻿namespace DiscordMusicBot.Abstractions
 {
-    public interface INotificationService
+    public interface IMessageSender
     {
         Task<DiscordMessageInfo?> SendAsync(CommandStatus status, string message, DiscordMessageInfo? messageInfo = null);
         Task<DiscordMessageInfo?> SuggestAsync(string message, SuggestOption[] options, DiscordMessageInfo? messageInfo = null);

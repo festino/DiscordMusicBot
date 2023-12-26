@@ -4,16 +4,16 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class UnknownCommandExecutor : ICommandExecutor
     {
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
 
-        public UnknownCommandExecutor(INotificationService notificationService)
+        public UnknownCommandExecutor(IMessageSender notificationService)
         {
-            _notificationService = notificationService;
+            _messageSender = notificationService;
         }
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            await _notificationService.SendAsync(CommandStatus.Info, "unknown command", messageInfo);
+            await _messageSender.SendAsync(CommandStatus.Info, "unknown command", messageInfo);
         }
     }
 }

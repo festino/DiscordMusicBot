@@ -5,12 +5,12 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class UndoCommandExecutor : ICommandExecutor
     {
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
         private readonly RequestQueue _queue;
 
-        public UndoCommandExecutor(INotificationService notificationService, RequestQueue queue)
+        public UndoCommandExecutor(IMessageSender notificationService, RequestQueue queue)
         {
-            _notificationService = notificationService;
+            _messageSender = notificationService;
             _queue = queue;
         }
 
@@ -20,17 +20,17 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (videos is null)
             {
-                await _notificationService.SendAsync(CommandStatus.Info, "could not skip video", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Info, "could not skip video", messageInfo);
                 return;
             }
 
             if (videos.Length == 1)
             {
-                await _notificationService.SendAsync(CommandStatus.Info, "skip " + videos[0].Header.Title);
+                await _messageSender.SendAsync(CommandStatus.Info, "skip " + videos[0].Header.Title);
                 return;
             }
 
-            await _notificationService.SendAsync(CommandStatus.Info,
+            await _messageSender.SendAsync(CommandStatus.Info,
                                                  "skip\n" + string.Join("\n", videos.Select((v) => v.Header.Title)));
         }
     }

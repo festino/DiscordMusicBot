@@ -4,16 +4,16 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class HelpCommandExecutor : ICommandExecutor
     {
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
 
-        public HelpCommandExecutor(INotificationService notificationService)
+        public HelpCommandExecutor(IMessageSender notificationService)
         {
-            _notificationService = notificationService;
+            _messageSender = notificationService;
         }
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            await _notificationService.SendAsync(CommandStatus.Info, "available commands:\n" +
+            await _messageSender.SendAsync(CommandStatus.Info, "available commands:\n" +
                                                  "help, play, skip, undo, stop, list, now", messageInfo);
         }
     }

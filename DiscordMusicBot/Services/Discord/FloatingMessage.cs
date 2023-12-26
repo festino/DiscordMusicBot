@@ -10,7 +10,7 @@ namespace DiscordMusicBot.Services.Discord
 
         private readonly ILogger _logger;
 
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
 
         private DiscordMessageInfo? _messageInfo = null;
 
@@ -20,10 +20,10 @@ namespace DiscordMusicBot.Services.Discord
         private bool _isEdited = false;
         private bool _isLast = true;
 
-        public FloatingMessage(ILogger logger, INotificationService notificationService)
+        public FloatingMessage(ILogger logger, IMessageSender notificationService)
         {
             _logger = logger;
-            _notificationService = notificationService;
+            _messageSender = notificationService;
         }
 
         public async Task RunAsync()
@@ -101,7 +101,7 @@ namespace DiscordMusicBot.Services.Discord
 
             if (_isEdited)
             {
-                await _notificationService.EditAsync(CommandStatus.Info, _message, _messageInfo);
+                await _messageSender.EditAsync(CommandStatus.Info, _message, _messageInfo);
             }
         }
 
@@ -115,7 +115,7 @@ namespace DiscordMusicBot.Services.Discord
 
             _isEdited = false;
             _isLast = true;
-            _messageInfo = await _notificationService.SendAsync(CommandStatus.Info, _message);
+            _messageInfo = await _messageSender.SendAsync(CommandStatus.Info, _message);
         }
 
         private async Task DeleteMessageAsync()
@@ -126,7 +126,7 @@ namespace DiscordMusicBot.Services.Discord
                 return;
             }
 
-            await _notificationService.DeleteAsync(_messageInfo);
+            await _messageSender.DeleteAsync(_messageInfo);
         }
     }
 }

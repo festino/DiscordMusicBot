@@ -6,13 +6,13 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class NowCommandExecutor : ICommandExecutor
     {
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
         private readonly RequestQueue _queue;
         private readonly IAudioStreamer _streamer;
 
-        public NowCommandExecutor(INotificationService notificationService, RequestQueue queue, IAudioStreamer streamer)
+        public NowCommandExecutor(IMessageSender notificationService, RequestQueue queue, IAudioStreamer streamer)
         {
-            _notificationService = notificationService;
+            _messageSender = notificationService;
             _queue = queue;
             _streamer = streamer;
         }
@@ -46,7 +46,7 @@ namespace DiscordMusicBot.Commands.Executors
                 }
             }
 
-            await _notificationService.SendAsync(CommandStatus.Info, message, messageInfo);
+            await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }
 }

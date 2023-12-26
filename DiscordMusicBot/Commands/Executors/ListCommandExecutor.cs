@@ -5,13 +5,13 @@ namespace DiscordMusicBot.Commands.Executors
 {
     public class ListCommandExecutor : ICommandExecutor
     {
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
         private readonly RequestQueue _queue;
 
-        public ListCommandExecutor(INotificationService notificationService, RequestQueue queue)
+        public ListCommandExecutor(IMessageSender notificationService, RequestQueue queue)
         {
             _queue = queue;
-            _notificationService = notificationService;
+            _messageSender = notificationService;
         }
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
@@ -19,14 +19,14 @@ namespace DiscordMusicBot.Commands.Executors
             var list = _queue.GetVideos();
             if (list.Count == 0)
             {
-                await _notificationService.SendAsync(CommandStatus.Info, "queue is empty", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Info, "queue is empty", messageInfo);
                 return;
             }
 
             var fullTime = TimeSpan.FromSeconds(list.Sum(v => v.Header.Duration.TotalSeconds));
             string message = $"{list.Count} songs, {fullTime}\n";
             message += string.Join("\n", list.Select(v => v.Header.Title));
-            await _notificationService.SendAsync(CommandStatus.Info, message, messageInfo);
+            await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }
 }

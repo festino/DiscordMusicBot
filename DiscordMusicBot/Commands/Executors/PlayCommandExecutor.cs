@@ -11,12 +11,12 @@ namespace DiscordMusicBot.Commands.Executors
         private readonly RequestQueue _queue;
         private readonly IYoutubeDataProvider _youtubeDataProvider;
 
-        private readonly INotificationService _notificationService;
+        private readonly IMessageSender _messageSender;
 
-        public PlayCommandExecutor(INotificationService notificationService,
+        public PlayCommandExecutor(IMessageSender notificationService,
                                    RequestQueue queue, IYoutubeDataProvider youtubeDataProvider)
         {
-            _notificationService = notificationService;
+            _messageSender = notificationService;
             _queue = queue;
             _youtubeDataProvider = youtubeDataProvider;
         }
@@ -26,7 +26,7 @@ namespace DiscordMusicBot.Commands.Executors
             string[] argsStrs = args.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (argsStrs.Length == 0)
             {
-                await _notificationService.SendAsync(CommandStatus.Error, "no argument", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Error, "no argument", messageInfo);
                 return;
             }
 
@@ -50,12 +50,12 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (suggestOptions.Length == 0)
             {
-                await _notificationService.SendAsync(CommandStatus.Error, "no search results", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Error, "no search results", messageInfo);
                 return;
             }
 
             string text = "choose:\n" + string.Join(" | ", topOptions.Select(t => $"[{t.Item2.ChannelName}](https://youtu.be/{t.Item1})"));
-            await _notificationService.SuggestAsync(text, suggestOptions, messageInfo);
+            await _messageSender.SuggestAsync(text, suggestOptions, messageInfo);
         }
 
         private async Task AddVideos(string[] args, DiscordMessageInfo messageInfo)
@@ -79,7 +79,7 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (badArgs.Count > 0)
             {
-                await _notificationService.SendAsync(CommandStatus.Error, $"could not get ids: {string.Join(", ", badArgs)}", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Error, $"could not get ids: {string.Join(", ", badArgs)}", messageInfo);
                 return;
             }
 
@@ -97,7 +97,7 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (badIds.Count > 0)
             {
-                await _notificationService.SendAsync(CommandStatus.Error, $"there are invalid ids: {string.Join(", ", badIds)}", messageInfo);
+                await _messageSender.SendAsync(CommandStatus.Error, $"there are invalid ids: {string.Join(", ", badIds)}", messageInfo);
                 return;
             }
 
@@ -106,7 +106,7 @@ namespace DiscordMusicBot.Commands.Executors
                 _queue.Add(new Video(youtubeIds[i], headers[i], messageInfo));
             }
 
-            await _notificationService.SendAsync(CommandStatus.Info,
+            await _messageSender.SendAsync(CommandStatus.Info,
                 headers.Count == 1 ? $"added song {headers[0].Title}" : $"added {headers.Count} songs"
             );
         }
