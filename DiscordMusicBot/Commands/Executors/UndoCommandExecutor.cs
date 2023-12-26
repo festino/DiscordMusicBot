@@ -33,8 +33,8 @@ namespace DiscordMusicBot.Commands.Executors
                 return;
             }
 
-            string message = string.Format("Skipped {0} videos:\n{1}",
-                                           videos.Length, FormatUtils.FormatVideos(videos.Select((v) => v.Header)));
+            string videosListStr = FormatUtils.FormatVideos(videos.Select((v) => v.Header).ToList());
+            string message = string.Format("Skipped {0} videos:\n{1}", videos.Length, videosListStr);
             await _messageSender.SendAsync(CommandStatus.Info, message);
         }
     }

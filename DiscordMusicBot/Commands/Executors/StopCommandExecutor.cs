@@ -25,7 +25,8 @@ namespace DiscordMusicBot.Commands.Executors
                 return;
             }
 
-            string message = string.Format("drop queue\n{0}", FormatUtils.FormatVideos(list.Select(v => v.Header)));
+            string videosListStr = FormatUtils.FormatVideos(list.Select(v => v.Header).ToList());
+            string message = string.Format("Drop queue\n{0}", videosListStr);
             await _messageSender.SendAsync(CommandStatus.Info, message);
         }
     }
