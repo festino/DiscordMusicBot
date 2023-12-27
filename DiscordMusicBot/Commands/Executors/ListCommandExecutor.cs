@@ -1,5 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
@@ -22,7 +23,7 @@ namespace DiscordMusicBot.Commands.Executors
             List<Video> videos = _queue.GetVideos();
             if (videos.Count == 0)
             {
-                string message1 = "queue is empty";
+                string message1 = LangConfig.CommandListNoVideos;
                 await _messageSender.SendAsync(CommandStatus.Info, message1, messageInfo);
                 return;
             }
@@ -39,7 +40,7 @@ namespace DiscordMusicBot.Commands.Executors
 
             string fullTimeStr = FormatUtils.FormatTimestamp(fullTime);
             string videoListStr = FormatUtils.FormatVideos(videos.Select(v => v.Header).ToList());
-            string message = string.Format("{0} songs, {1}\n{2}", videos.Count, fullTimeStr, videoListStr);
+            string message = string.Format(LangConfig.CommandListTemplate, videos.Count, fullTimeStr, videoListStr);
             await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }

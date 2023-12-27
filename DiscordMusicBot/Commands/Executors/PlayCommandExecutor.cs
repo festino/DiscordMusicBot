@@ -1,5 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Services.Youtube.Data;
 using DiscordMusicBot.Utils;
 
@@ -26,7 +27,7 @@ namespace DiscordMusicBot.Commands.Executors
             string[] argsStrs = args.Replace(',', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (argsStrs.Length == 0)
             {
-                string message = "I can't get it!\nTry \"f!play youtu.be/dQw4w9WgXcQ\" or query \"f!play gangnam style\"";
+                string message = LangConfig.CommandPlayNoArgument;
                 await _messageSender.SendAsync(CommandStatus.Error, message, messageInfo);
                 return;
             }
@@ -51,13 +52,13 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (suggestOptions.Length == 0)
             {
-                string message1 = "No search results :(";
+                string message1 = LangConfig.CommandPlaySearchNoOptions;
                 await _messageSender.SendAsync(CommandStatus.Error, message1, messageInfo);
                 return;
             }
 
             string links = string.Join(" | ", topOptions.Select(t => $"[{t.Item2.ChannelName}](https://youtu.be/{t.Item1})"));
-            string message = string.Format("Choose:\n{0}", links);
+            string message = string.Format(LangConfig.CommandPlaySearchOptions, links);
             await _messageSender.SuggestAsync(message, suggestOptions, messageInfo);
         }
 
@@ -82,7 +83,7 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (badArgs.Count > 0)
             {
-                string message1 = string.Format("Could not get youtube ids from:\n{0}", string.Join(", ", badArgs));
+                string message1 = string.Format(LangConfig.CommandPlayBadArgs, string.Join(", ", badArgs));
                 await _messageSender.SendAsync(CommandStatus.Error, message1, messageInfo);
                 return;
             }
@@ -101,7 +102,7 @@ namespace DiscordMusicBot.Commands.Executors
 
             if (badIds.Count > 0)
             {
-                string message1 = string.Format("Could not load videos:\n{0}", string.Join(", ", badIds));
+                string message1 = string.Format(LangConfig.CommandPlayBadIds, string.Join(", ", badIds));
                 await _messageSender.SendAsync(CommandStatus.Error, message1, messageInfo);
                 return;
             }
@@ -113,9 +114,9 @@ namespace DiscordMusicBot.Commands.Executors
 
             string message;
             if (headers.Count == 1)
-                message = string.Format("Added song {0}", FormatUtils.FormatVideo(headers[0]));
+                message = string.Format(LangConfig.CommandPlayAddOne, FormatUtils.FormatVideo(headers[0]));
             else
-                message = string.Format("Added {0} songs\n{1}", headers.Count, FormatUtils.FormatVideos(headers));
+                message = string.Format(LangConfig.CommandPlayAddMany, headers.Count, FormatUtils.FormatVideos(headers));
 
             await _messageSender.SendAsync(CommandStatus.Info, message);
         }

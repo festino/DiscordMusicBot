@@ -1,4 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Configuration;
 
 namespace DiscordMusicBot.Utils
 {
@@ -13,28 +14,28 @@ namespace DiscordMusicBot.Utils
 
         public static string FormatJoiningMessage()
         {
-            return string.Format("Joining voice channel{0}", GetLoadingDots());
+            return string.Format(LangConfig.JoiningVoiceChannel, GetLoadingDots());
         }
 
         public static string FormatPlayingMessage(AudioInfo? audioInfo)
         {
             if (audioInfo is null)
             {
-                return string.Format("Loading{0}", GetLoadingDots());
+                return string.Format(LangConfig.Loading, GetLoadingDots());
             }
 
             double progress = audioInfo.CurrentTime.TotalSeconds / audioInfo.Video.Header.Duration.TotalSeconds;
             string timeBar = FormatUtils.FormatProgressBar(progress, ProgressBarLength, CellStates);
             string timeStr = FormatUtils.FormatTimestamps(audioInfo.CurrentTime, audioInfo.Video.Header.Duration);
             if (progress == 0.0)
-                return string.Format("Loading {0}\n{1} {2}", audioInfo.Video.Header.Title, timeBar, timeStr);
+                return string.Format(LangConfig.LoadingAudio, audioInfo.Video.Header.Title, timeBar, timeStr);
 
-            return string.Format("Playing {0}\n{1} {2}", audioInfo.Video.Header.Title, timeBar, timeStr);
+            return string.Format(LangConfig.PlayingAudio, audioInfo.Video.Header.Title, timeBar, timeStr);
         }
 
         public static string FormatLabel(VideoHeader header)
         {
-            return string.Format("({1}) {0}", header.Title, FormatUtils.FormatTimestamp(header.Duration));
+            return string.Format("({1}) {0}", FormatUtils.FormatVideo(header), FormatUtils.FormatTimestamp(header.Duration));
         }
 
         private static string GetLoadingDots()

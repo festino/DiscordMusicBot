@@ -1,4 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Extensions;
 using Serilog;
 using static DiscordMusicBot.Abstractions.IAudioDownloader;
@@ -112,7 +113,8 @@ namespace DiscordMusicBot.AudioRequesting
         private async Task OnLoadFailedAsync(object sender, LoadFailedArgs args)
         {
             _logger.Here().Warning("Load failed {YoutubeId}", args.YoutubeId);
-            await _messageSender.SendAsync(CommandStatus.Error, string.Format("Could not load {0}", args.YoutubeId));
+            string message = string.Format(LangConfig.AudioLoadError, args.YoutubeId);
+            await _messageSender.SendAsync(CommandStatus.Error, message);
             await RemoveAtAsync(0);
         }
 
@@ -149,7 +151,7 @@ namespace DiscordMusicBot.AudioRequesting
         {
             if (_videos.Count == 0)
             {
-                _floatingMessage.Update("No videos left :skull:");
+                _floatingMessage.Update(LangConfig.QueueIsEmpty);
                 _audioStreamer.RequestLeave();
             }
         }

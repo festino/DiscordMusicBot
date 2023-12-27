@@ -1,5 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
@@ -20,13 +21,13 @@ namespace DiscordMusicBot.Commands.Executors
             List<Video> list = await _queue.ClearAsync();
             if (list.Count == 0)
             {
-                string message1 = "Queue is already empty";
+                string message1 = LangConfig.CommandStopNoVideos;
                 await _messageSender.SendAsync(CommandStatus.Info, message1, messageInfo);
                 return;
             }
 
             string videosListStr = FormatUtils.FormatVideos(list.Select(v => v.Header).ToList());
-            string message = string.Format("Drop queue\n{0}", videosListStr);
+            string message = string.Format(LangConfig.CommandStopMany, videosListStr);
             await _messageSender.SendAsync(CommandStatus.Info, message);
         }
     }

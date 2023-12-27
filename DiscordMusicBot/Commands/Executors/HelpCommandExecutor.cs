@@ -1,4 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Configuration;
 
 namespace DiscordMusicBot.Commands.Executors
 {
@@ -13,7 +14,7 @@ namespace DiscordMusicBot.Commands.Executors
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            string message = string.Format("Available commands:\nhelp, play, skip, undo, stop, list, now");
+            string message = LangConfig.CommandHelp;
             await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }

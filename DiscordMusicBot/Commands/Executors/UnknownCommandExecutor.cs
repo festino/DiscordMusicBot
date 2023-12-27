@@ -1,4 +1,5 @@
 ﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Configuration;
 
 namespace DiscordMusicBot.Commands.Executors
 {
@@ -13,7 +14,7 @@ namespace DiscordMusicBot.Commands.Executors
 
         public async Task ExecuteAsync(string args, DiscordMessageInfo messageInfo)
         {
-            string message = "Unknown command! Use __help__ command";
+            string message = LangConfig.CommandUnknown;
             await _messageSender.SendAsync(CommandStatus.Info, message, messageInfo);
         }
     }
