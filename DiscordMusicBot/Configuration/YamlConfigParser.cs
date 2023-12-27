@@ -35,7 +35,7 @@ namespace DiscordMusicBot.Configuration
                 Dictionary<string, string> missingPairs = new();
                 foreach (ConfigProperty property in missingProperties)
                 {
-                    missingPairs.Add(property.Key, property.DefaultValue);
+                    missingPairs.Add(property.Key, Escape(property.DefaultValue));
                 }
 
                 if (text.Length > 0 && text[^1] != '\n')
@@ -59,6 +59,11 @@ namespace DiscordMusicBot.Configuration
                 return ((IDictionary<string, object>)settings).ContainsKey(name);
 
             return settings.GetType().GetProperty(name) != null;
+        }
+
+        private static string Escape(string value)
+        {
+            return value.Replace("\n", "\\n");
         }
     }
 }
