@@ -1,6 +1,6 @@
 ﻿namespace DiscordMusicBot.Configuration
 {
-    public class ConfigReader : IConfigReader
+    public class CredentialsConfigReader : IConfigReader
     {
         private const string CredentialsSign = "token";
 
@@ -9,7 +9,7 @@
         private readonly IConfigStream _mainStream;
         private readonly IConfigStream _credentialsStream;
 
-        public ConfigReader(IConfigParser parser, IConfigStream mainStream, IConfigStream credentialsStream)
+        public CredentialsConfigReader(IConfigParser parser, IConfigStream mainStream, IConfigStream credentialsStream)
         {
             _parser = parser;
             _mainStream = mainStream;

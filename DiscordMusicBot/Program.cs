@@ -34,7 +34,7 @@ namespace DiscordMusicBot
                 )
                 .CreateLogger();
 
-            ConfigReader reader = new(
+            CredentialsConfigReader reader = new(
                 new YamlConfigParser(),
                 new FileConfigStream("config.yml"),
                 new FileConfigStream("credentials.yml")
