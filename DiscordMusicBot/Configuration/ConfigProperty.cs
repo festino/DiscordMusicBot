@@ -1,4 +1,6 @@
-﻿namespace DiscordMusicBot.Configuration
+﻿using System.Text.RegularExpressions;
+
+namespace DiscordMusicBot.Configuration
 {
     public class ConfigProperty
     {
@@ -25,9 +27,30 @@
 
         public ConfigProperty(string key, string defaultValue, bool allowDefault = true)
         {
-            Key = key;
+            Key = PascalToKebabCase(key);
             DefaultValue = defaultValue;
             AllowDefault = allowDefault;
+        }
+
+        public ConfigProperty(object key, string defaultValue, bool allowDefault = true)
+        {
+            Key = PascalToKebabCase(key.ToString() ?? "null");
+            DefaultValue = defaultValue;
+            AllowDefault = allowDefault;
+        }
+
+        private static string PascalToKebabCase(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            return Regex.Replace(
+                value,
+                "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z0-9])",
+                "-$1",
+                RegexOptions.Compiled)
+                .Trim()
+                .ToLower();
         }
     }
 }
