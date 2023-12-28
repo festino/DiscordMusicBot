@@ -107,8 +107,8 @@
                 new(PropertyName.QueueIsEmpty, "No videos left :skull:"),
                 new(PropertyName.JoiningVoiceChannel, "Joining voice channel{0}"),
                 new(PropertyName.Loading, "Loading{0}"),
-                new(PropertyName.LoadingAudio, "Loading{0}\n{1} {2}"),
-                new(PropertyName.PlayingAudio, "Playing{0}\n{1} {2}"),
+                new(PropertyName.LoadingAudio, "Loading {0}\n{1} {2}"),
+                new(PropertyName.PlayingAudio, "Playing {0}\n{1} {2}"),
             };
 
             reader.Read(properties);
