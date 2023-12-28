@@ -1,5 +1,6 @@
 ﻿using DiscordMusicBot.Abstractions;
 using DiscordMusicBot.AudioRequesting;
+using DiscordMusicBot.Configuration;
 using DiscordMusicBot.Utils;
 
 namespace DiscordMusicBot.Commands.Executors
@@ -22,11 +23,15 @@ namespace DiscordMusicBot.Commands.Executors
             var history = _queue.GetHistory();
             var videos = _queue.GetVideos();
 
-            string message = "~~" + (history.Length == 0 ? "no history" : history[^1].Header.Title) + "~~";
+            string message = "";
+            if (history.Length > 0)
+            {
+                message += "~~" + FormatUtils.FormatVideo(history[^1].Header) + "~~";
+            }
 
             if (videos.Count == 0)
             {
-                message += "\nqueue is empty";
+                message += "\n" + LangConfig.CommandListNoVideos;
             }
             else
             {
@@ -38,11 +43,11 @@ namespace DiscordMusicBot.Commands.Executors
                     currentTime = info.CurrentTime;
                 }
 
-                message += $"\n{videos[0].Header.Title} ({FormatUtils.FormatTimestamps(currentTime, fullTime)})";
+                message += $"\n{FormatUtils.FormatVideo(videos[0].Header)} ({FormatUtils.FormatTimestamps(currentTime, fullTime)})";
 
                 for (int i = 1; i < Math.Min(videos.Count, 2); i++)
                 {
-                    message += "\n" + videos[i].Header.Title;
+                    message += "\n" + FormatUtils.FormatVideo(videos[i].Header);
                 }
             }
 
