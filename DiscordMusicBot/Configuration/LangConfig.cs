@@ -63,6 +63,8 @@
             CommandSkipNoVideos = Get(propertyValues, PropertyName.CommandSkipNoVideos);
             CommandSkipOne = Get(propertyValues, PropertyName.CommandSkipOne);
             CommandSkipMany = Get(propertyValues, PropertyName.CommandSkipMany);
+            CommandStopNoVideos = Get(propertyValues, PropertyName.CommandStopNoVideos);
+            CommandStopMany = Get(propertyValues, PropertyName.CommandStopMany);
             CommandListNoVideos = Get(propertyValues, PropertyName.CommandListNoVideos);
             CommandListTemplate = Get(propertyValues, PropertyName.CommandListTemplate);
             CommandPlayNoArgument = Get(propertyValues, PropertyName.CommandPlayNoArgument);
