@@ -22,11 +22,14 @@ namespace DiscordMusicBot.Configuration
             foreach (ConfigProperty property in properties)
             {
                 string v = TryGetString(content, property.Key);
-                property.Value = v;
                 if (v is null)
                 {
                     property.Value = property.DefaultValue;
                     missingProperties.Add(property);
+                }
+                else
+                {
+                    property.Value = Desanitize(v);
                 }
             }
 
@@ -35,7 +38,7 @@ namespace DiscordMusicBot.Configuration
                 Dictionary<string, string> missingPairs = new();
                 foreach (ConfigProperty property in missingProperties)
                 {
-                    missingPairs.Add(property.Key, Escape(property.DefaultValue));
+                    missingPairs.Add(property.Key, Sanitize(property.DefaultValue));
                 }
 
                 if (text.Length > 0 && text[^1] != '\n')
@@ -61,9 +64,14 @@ namespace DiscordMusicBot.Configuration
             return settings.GetType().GetProperty(name) != null;
         }
 
-        private static string Escape(string value)
+        private static string Sanitize(string value)
         {
-            return value.Replace("\n", "\\n");
+            return value.Replace(@"\", @"\\").Replace("\n", @"\n");
+        }
+
+        private static string Desanitize(string value)
+        {
+            return value.Replace(@"\n", "\n").Replace(@"\\", @"\");
         }
     }
 }
