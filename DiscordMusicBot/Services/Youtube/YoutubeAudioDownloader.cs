@@ -11,6 +11,9 @@ namespace DiscordMusicBot.Services.Youtube
 {
     public class YoutubeAudioDownloader : IAudioDownloader
     {
+        private readonly string YtDlFilepath = "yt-dlp";
+        private readonly string FfmpegFilepath = "ffmpeg";
+
         private readonly ILogger _logger;
 
         private readonly HttpClient _httpClient;
@@ -27,6 +30,20 @@ namespace DiscordMusicBot.Services.Youtube
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
             _httpClient.DefaultRequestHeaders.Add("Keep-Alive", "3600");
+
+            List<string> missingFiles = new();
+            if (!File.Exists(YtDlFilepath + ".exe"))
+            {
+                missingFiles.Add(YtDlFilepath + ".exe");
+            }
+            if (!File.Exists(FfmpegFilepath + ".exe"))
+            {
+                missingFiles.Add(FfmpegFilepath + ".exe");
+            }
+            if (missingFiles.Count > 0)
+            {
+                throw new FileNotFoundException($"Could not find files: {string.Join(", ", missingFiles)}");
+            }
         }
 
         public void RequestDownload(string youtubeId, bool notify)
@@ -64,7 +81,7 @@ namespace DiscordMusicBot.Services.Youtube
 
             Process? process = Process.Start(new ProcessStartInfo
             {
-                FileName = "yt-dlp",
+                FileName = YtDlFilepath,
                 Arguments = $"--extract-audio --audio-format mp3 -q -v -o \"{path}\" https://www.youtube.com/watch?v={youtubeId}",
                 UseShellExecute = false,
                 RedirectStandardOutput = true
@@ -85,7 +102,7 @@ namespace DiscordMusicBot.Services.Youtube
 
             Process? process = Process.Start(new ProcessStartInfo
             {
-                FileName = "yt-dlp",
+                FileName = YtDlFilepath,
                 Arguments = $"--extract-audio --quiet --simulate --print url https://www.youtube.com/watch?v={youtubeId}",
                 UseShellExecute = false,
                 RedirectStandardOutput = true
@@ -152,7 +169,7 @@ namespace DiscordMusicBot.Services.Youtube
 
             Process? process = Process.Start(new ProcessStartInfo
             {
-                FileName = "ffmpeg",
+                FileName = FfmpegFilepath,
                 Arguments = $"-hide_banner -loglevel panic -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
                 UseShellExecute = false,
                 RedirectStandardInput = true,
