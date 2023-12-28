@@ -13,6 +13,9 @@ namespace DiscordMusicBot.AudioRequesting
 {
     public class AudioStreamer : IAudioStreamer
     {
+        private readonly string OpusFilepath = "opus.dll";
+        private readonly string SodiumFilepath = "libsodium.dll";
+
         private const int RetryDelayMs = 500;
         private const int VoiceChannelTimeoutMs = 5 * 60 * 1000;
 
@@ -52,6 +55,20 @@ namespace DiscordMusicBot.AudioRequesting
             _logger = logger;
             _client = client;
             _floatingMessage = floatingMessage;
+
+            List<string> missingFiles = new();
+            if (!File.Exists(OpusFilepath))
+            {
+                missingFiles.Add(OpusFilepath);
+            }
+            if (!File.Exists(SodiumFilepath))
+            {
+                missingFiles.Add(SodiumFilepath);
+            }
+            if (missingFiles.Count > 0)
+            {
+                throw new FileNotFoundException($"Could not find files: {string.Join(", ", missingFiles)}");
+            }
         }
 
         public AudioInfo? GetPlaybackInfo()
@@ -308,6 +325,7 @@ namespace DiscordMusicBot.AudioRequesting
                 return null;
 
             (IVoiceChannel voiceChannel, IGuildUser voiceUser) = channelsInfo[0];
+            _logger.Here().Information("{c} {r}", voiceChannel.Name, voiceUser.Username);
             _audioClient = await voiceChannel.ConnectAsync(true, false);
             if (_audioClient is null)
                 return null;
