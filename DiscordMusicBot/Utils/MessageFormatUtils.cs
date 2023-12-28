@@ -24,13 +24,14 @@ namespace DiscordMusicBot.Utils
                 return string.Format(LangConfig.Loading, GetLoadingDots());
             }
 
-            double progress = audioInfo.CurrentTime.TotalSeconds / audioInfo.Video.Header.Duration.TotalSeconds;
+            VideoHeader header = audioInfo.Video.Header;
+            double progress = audioInfo.CurrentTime.TotalSeconds / header.Duration.TotalSeconds;
             string timeBar = FormatUtils.FormatProgressBar(progress, ProgressBarLength, CellStates);
-            string timeStr = FormatUtils.FormatTimestamps(audioInfo.CurrentTime, audioInfo.Video.Header.Duration);
+            string timeStr = FormatUtils.FormatTimestamps(audioInfo.CurrentTime, header.Duration);
             if (progress == 0.0)
-                return string.Format(LangConfig.LoadingAudio, audioInfo.Video.Header.Title, timeBar, timeStr);
+                return string.Format(LangConfig.LoadingAudio, FormatUtils.FormatVideo(header), timeBar, timeStr);
 
-            return string.Format(LangConfig.PlayingAudio, audioInfo.Video.Header.Title, timeBar, timeStr);
+            return string.Format(LangConfig.PlayingAudio, FormatUtils.FormatVideo(header), timeBar, timeStr);
         }
 
         public static string FormatLabel(VideoHeader header)
