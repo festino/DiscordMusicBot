@@ -25,6 +25,9 @@ namespace DiscordMusicBot.Utils
 
         public static string FormatProgressBar(double progress, int cellsCount, string cellStates)
         {
+            if (progress < 0.0)
+                throw new ArgumentOutOfRangeException(nameof(progress));
+
             if (cellsCount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(cellsCount));
 
@@ -36,8 +39,11 @@ namespace DiscordMusicBot.Utils
             int completedCellsCount = stateProgress / n;
             char currentCell = cellStates[stateProgress % n];
 
-            string completedCells = new string(cellStates[^1], completedCellsCount);
-            string emptyCells = new string(cellStates[0], cellsCount - completedCellsCount - 1);
+            string completedCells = new(cellStates[^1], completedCellsCount);
+            if (completedCellsCount >= cellsCount)
+                return completedCells;
+
+            string emptyCells = new(cellStates[0], cellsCount - completedCellsCount - 1);
             return completedCells + currentCell + emptyCells;
         }
 
