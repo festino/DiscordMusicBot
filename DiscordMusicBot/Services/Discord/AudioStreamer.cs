@@ -199,8 +199,11 @@ namespace DiscordMusicBot.AudioRequesting
                 {
                     await stream.CopyToAsync(discord, cancellationToken);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException e)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        return false;
+
                     // if bot was kicked cancellationToken will not be set
                     // causing discord.FlushAsync to hang forever
                     if (await WasKickedAsync())
@@ -209,7 +212,7 @@ namespace DiscordMusicBot.AudioRequesting
                         throw;
                     }
 
-                    _logger.Here().Warning("Inner task was cancelled! Reconnecting voice channel...");
+                    _logger.Here().Warning("Inner task was cancelled! Reconnecting voice channel...\n{Exception}", e);
                     return true;
                 }
                 finally
