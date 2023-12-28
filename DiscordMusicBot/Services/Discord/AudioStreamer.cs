@@ -16,6 +16,9 @@ namespace DiscordMusicBot.AudioRequesting
         private const int RetryDelayMs = 500;
         private const int VoiceChannelTimeoutMs = 5 * 60 * 1000;
 
+        // AuditLog merges kicks for ~5 minutes
+        private const int KickTimeWindowMs = 5 * 1000 * 60;
+
         private readonly ILogger _logger;
 
         private readonly IFloatingMessage _floatingMessage;
@@ -75,7 +78,7 @@ namespace DiscordMusicBot.AudioRequesting
             _floatingMessage.Update(() => MessageFormatUtils.FormatJoiningMessage());
             await JoinAsync(getRequesterIds, cancellationToken);
             _floatingMessage.Update(() => MessageFormatUtils.FormatPlayingMessage(GetPlaybackInfo()));
-            await StartNewAsync(video, pcmStream, cancellationToken);
+            await StartNewAsync(video, pcmStream, getRequesterIds, cancellationToken);
         }
 
         public void RequestLeave()
@@ -105,11 +108,11 @@ namespace DiscordMusicBot.AudioRequesting
             _logger.Here().Debug("Stopped audio streamer");
         }
 
-        private async Task StartNewAsync(Video video, Stream pcmStream, CancellationToken cancellationToken)
+        private async Task StartNewAsync(Video video, Stream pcmStream, Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
         {
             _logger.Here().Debug("Starting {YoutubeId}", video.YoutubeId);
             _currentVideo = video;
-            _playTask = PlayAudioAsync(pcmStream, cancellationToken);
+            _playTask = PlayAudioAsync(pcmStream, getRequesterIds, cancellationToken);
             await _playTask;
             _logger.Here().Debug("Finished {YoutubeId}", video.YoutubeId);
 
@@ -136,7 +139,7 @@ namespace DiscordMusicBot.AudioRequesting
             _state = PlaybackState.NoStream;
         }
 
-        private async Task PlayAudioAsync(Stream pcmStream, CancellationToken cancellationToken)
+        private async Task PlayAudioAsync(Stream pcmStream, Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
         {
             if (_audioClient is null)
             {
@@ -146,46 +149,30 @@ namespace DiscordMusicBot.AudioRequesting
 
             try
             {
-                await PlayAsync(_audioClient, pcmStream, cancellationToken);
+                await PlayAsync(pcmStream, getRequesterIds, cancellationToken);
             }
             catch (Exception e)
             {
                 if (!cancellationToken.IsCancellationRequested)
                 {
                     _logger.Here().Error("Audio client was disconnected!\n{Exception}", e);
-                    await LeaveAsync(0, CancellationToken.None);
+                    if (e is OperationCanceledException)
+                        await LeaveAsync(0, CancellationToken.None);
                 }
             }
             _currentVideo = null;
             _state = PlaybackState.NoStream;
         }
 
-        private async Task PlayAsync(IAudioClient audioClient, Stream pcmStream, CancellationToken cancellationToken)
+        private async Task PlayAsync(Stream pcmStream, Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
         {
             // TODO try load average volume 
             using (pcmStream)
             using (_volumeStream = new VolumeStream(new AverageVolumeBalancer(), null, pcmStream))
             {
-                using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
+                while (await TryPlayAsync(_volumeStream, cancellationToken))
                 {
-                    _state = PlaybackState.Playing;
-                    bool isCancelled = false;
-                    try
-                    {
-                        await _volumeStream.CopyToAsync(discord, cancellationToken);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // if bot was kicked cancellationToken will not be set
-                        // causing discord.FlushAsync to hang forever
-                        isCancelled = true;
-                        throw;
-                    }
-                    finally
-                    {
-                        if (!isCancelled)
-                            await discord.FlushAsync(cancellationToken);
-                    }
+                    await JoinAsync(getRequesterIds, cancellationToken);
                 }
 
                 if (_volumeStream.AverageVolume is not null)
@@ -193,6 +180,78 @@ namespace DiscordMusicBot.AudioRequesting
                     // TODO save average volume 
                 }
             }
+        }
+
+        private async Task<bool> TryPlayAsync(Stream stream, CancellationToken cancellationToken)
+        {
+            IAudioClient? audioClient = _audioClient;
+            if (audioClient is null)
+            {
+                _logger.Here().Error("Audio client is null!");
+                return true;
+            }
+
+            using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
+            {
+                _state = PlaybackState.Playing;
+                bool wasKicked = false;
+                try
+                {
+                    await stream.CopyToAsync(discord, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // if bot was kicked cancellationToken will not be set
+                    // causing discord.FlushAsync to hang forever
+                    if (await WasKickedAsync())
+                    {
+                        wasKicked = true;
+                        throw;
+                    }
+
+                    _logger.Here().Warning("Inner task was cancelled! Reconnecting voice channel...");
+                    return true;
+                }
+                finally
+                {
+                    if (!wasKicked && !cancellationToken.IsCancellationRequested)
+                        await discord.FlushAsync(cancellationToken);
+                }
+            }
+            return false;
+        }
+
+        private async Task<bool> WasKickedAsync()
+        {
+            if (_guildId is null)
+                throw new InvalidOperationException("Guild id is not initialized!");
+
+            IGuild? guild = _client.GetGuild((ulong)_guildId);
+            if (guild is null)
+            {
+                _logger.Here().Error("Guild {GuildId} is null", (ulong)_guildId);
+                return true;
+            }
+
+            var user = await guild.GetCurrentUserAsync();
+            if (!user.GuildPermissions.Has(GuildPermission.ViewAuditLog))
+            {
+                _logger.Here().Warning("Missing permission {Permission}, {BotName} has only {BotPermissions}",
+                                       GuildPermission.ViewAuditLog, user.DisplayName,
+                                       string.Join(", ", user.GuildPermissions.ToList()));
+                return true;
+            }
+
+            var auditEntries = await guild.GetAuditLogsAsync(limit: 10, actionType: ActionType.MemberDisconnected);
+            foreach (var audit in auditEntries)
+            {
+                if ((DateTime.UtcNow - audit.CreatedAt.DateTime).TotalMilliseconds > KickTimeWindowMs)
+                    continue;
+
+                _logger.Here().Information("Possibly kicked by {UserName}", audit.User.GlobalName);
+                return true;
+            }
+            return false;
         }
 
         private Tuple<IVoiceChannel, IGuildUser>[] GetChannels(ulong[] requesterIds)
