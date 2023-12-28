@@ -32,11 +32,14 @@ namespace DiscordMusicBot.Services.Discord
             {
                 var timeStart = DateTime.Now;
 
-                if (_messageFactory is not null)
+                try
                 {
-                    UpdateMessage(_messageFactory());
+                    await TickAsync();
                 }
-                await TickAsync();
+                catch (Exception e)
+                {
+                    _logger.Here().Error(e.ToString());
+                }
 
                 int msPassed = (int)(DateTime.Now - timeStart).TotalMilliseconds;
                 int delayMs = Math.Max(0, UpdateDelayMs - msPassed);
@@ -76,6 +79,11 @@ namespace DiscordMusicBot.Services.Discord
 
         private async Task TickAsync()
         {
+            if (_messageFactory is not null)
+            {
+                UpdateMessage(_messageFactory());
+            }
+
             if (_message is null && _messageInfo is null) return;
 
             if (_message is null)
