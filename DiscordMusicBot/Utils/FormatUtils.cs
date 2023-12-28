@@ -50,7 +50,7 @@ namespace DiscordMusicBot.Utils
 
         public static string FormatVideo(VideoHeader header)
         {
-            return header.Title;
+            return Format.Sanitize(header.Title);
         }
 
         public static string? FormatLink(string link, string label)
