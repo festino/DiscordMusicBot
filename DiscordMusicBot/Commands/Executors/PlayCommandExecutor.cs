@@ -57,7 +57,8 @@ namespace DiscordMusicBot.Commands.Executors
                 return;
             }
 
-            string links = string.Join(" | ", topOptions.Select(t => $"[{t.Item2.ChannelName}](https://youtu.be/{t.Item1})"));
+            string links = string.Join(" | ", topOptions.Select(t => FormatUtils.FormatLink($"https://youtu.be/{t.Item1}",
+                                                                                            t.Item2.ChannelName)));
             string message = string.Format(LangConfig.CommandPlaySearchOptions, links);
             await _messageSender.SuggestAsync(message, suggestOptions, messageInfo);
         }

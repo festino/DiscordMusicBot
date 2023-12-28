@@ -1,6 +1,7 @@
 ﻿using Discord;
 using DiscordMusicBot.Abstractions;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace DiscordMusicBot.Utils
 {
@@ -50,6 +51,12 @@ namespace DiscordMusicBot.Utils
         public static string FormatVideo(VideoHeader header)
         {
             return header.Title;
+        }
+
+        public static string? FormatLink(string link, string label)
+        {
+            label = Regex.Replace(label, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
+            return $"[{label}]({link})";
         }
 
         public static string FormatVideos(IReadOnlyList<VideoHeader> headers)
