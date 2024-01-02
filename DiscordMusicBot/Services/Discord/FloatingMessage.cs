@@ -109,6 +109,7 @@ namespace DiscordMusicBot.Services.Discord
 
             if (_isEdited)
             {
+                _isEdited = false;
                 await _messageSender.EditAsync(CommandStatus.Info, _message, _messageInfo);
             }
         }
