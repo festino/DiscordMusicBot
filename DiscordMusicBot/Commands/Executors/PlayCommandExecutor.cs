@@ -96,9 +96,24 @@ namespace DiscordMusicBot.Commands.Executors
             {
                 var header = headersResult[i];
                 if (header is not null)
-                    headers.Add(header);
+                {
+                    if (header.ReasonUnplayable is not null)
+                    {
+                        badIds.Add($"{youtubeIds[i]} ({header.ReasonUnplayable})");
+                    }
+                    else if (header.Live)
+                    {
+                        badIds.Add($"{youtubeIds[i]} (Live broadcasts are currently not available)");
+                    }
+                    else
+                    {
+                        headers.Add(header);
+                    }
+                }
                 else if (idSources[i] != YoutubeIdSource.Playlist)
+                {
                     badIds.Add(youtubeIds[i]);
+                }
             }
 
             if (badIds.Count > 0)
