@@ -1,16 +1,13 @@
-﻿using AsyncEvent;
-
-namespace DiscordMusicBot.Abstractions
+﻿namespace DiscordMusicBot.Abstractions
 {
     public interface IAudioDownloader
     {
         record LoadCompletedArgs(string YoutubeId, Stream PcmStream);
         record LoadFailedArgs(string YoutubeId);
 
-        event AsyncEventHandler<LoadCompletedArgs>? LoadCompleted;
-        event AsyncEventHandler<LoadFailedArgs>? LoadFailed;
 
-        void RequestDownload(string youtubeId, bool notify);
-        void StopDownloading(string youtubeId);
+        void RequestDownload(string youtubeId,
+                             Func<LoadCompletedArgs, Task> OnCompleted,
+                             Func<LoadFailedArgs, Task> OnFailed);
     }
 }

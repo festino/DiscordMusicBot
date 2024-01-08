@@ -1,5 +1,4 @@
-﻿using AsyncEvent;
-using DiscordMusicBot.Abstractions;
+﻿using DiscordMusicBot.Abstractions;
 using Serilog;
 using System.Diagnostics;
 using System.Net.Http.Headers;
@@ -11,6 +10,11 @@ namespace DiscordMusicBot.Services.Youtube
 {
     public class YoutubeAudioDownloader : IAudioDownloader
     {
+        private record CallbackInfo(
+            string YoutubeId,
+            Func<LoadCompletedArgs, Task> OnCompleted,
+            Func<LoadFailedArgs, Task> OnFailed);
+
         private readonly string YtDlFilepath = "yt-dlp";
         private readonly string FfmpegFilepath = "ffmpeg";
 
@@ -19,10 +23,7 @@ namespace DiscordMusicBot.Services.Youtube
         private readonly HttpClient _httpClient;
 
         private readonly List<string> _downloadingIds = new();
-        private readonly List<string> _notifyIds = new();
-
-        public event AsyncEventHandler<LoadCompletedArgs>? LoadCompleted;
-        public event AsyncEventHandler<LoadFailedArgs>? LoadFailed;
+        private readonly List<CallbackInfo> _callbacks = new();
 
         public YoutubeAudioDownloader(ILogger logger)
         {
@@ -46,12 +47,13 @@ namespace DiscordMusicBot.Services.Youtube
             }
         }
 
-        public void RequestDownload(string youtubeId, bool notify)
+        public void RequestDownload(string youtubeId,
+                                    Func<LoadCompletedArgs, Task> OnCompleted,
+                                    Func<LoadFailedArgs, Task> OnFailed)
         {
             lock (_downloadingIds)
             {
-                if (notify)
-                    _notifyIds.Add(youtubeId);
+                _callbacks.Add(new CallbackInfo(youtubeId, OnCompleted, OnFailed));
 
                 if (_downloadingIds.Contains(youtubeId))
                     return;
@@ -60,14 +62,6 @@ namespace DiscordMusicBot.Services.Youtube
             }
 
             Task.Run(() => DownloadAsync(youtubeId));
-        }
-
-        public void StopDownloading(string youtubeId)
-        {
-            lock (_downloadingIds)
-            {
-                _notifyIds.Remove(youtubeId);
-            }
         }
 
         private async Task<string?> DownloadMp3Async(string youtubeId)
@@ -188,31 +182,34 @@ namespace DiscordMusicBot.Services.Youtube
         {
             string? link = await GetWebaLink(youtubeId);
             Stream? stream = link is null ? null : GetPCMStream(link);
-            bool notify = false;
+            List<CallbackInfo> callbacks;
             lock (_downloadingIds)
             {
                 _downloadingIds.Remove(youtubeId);
-                notify = _notifyIds.Remove(youtubeId);
+
+                callbacks = _callbacks
+                    .Where(c => c.YoutubeId == youtubeId)
+                    .ToList();
+
+                _callbacks.RemoveAll(c => callbacks.Contains(c));
             }
 
-            if (notify)
-                await OnLoadedAsync(youtubeId, stream);
+            await OnLoadedAsync(youtubeId, stream, callbacks);
         }
 
-        private async Task OnLoadedAsync(string youtubeId, Stream? stream)
+        private async Task OnLoadedAsync(string youtubeId, Stream? stream, List<CallbackInfo> callbacks)
         {
             Task? task;
             if (stream is null)
             {
-                task = LoadFailed?.InvokeAsync(this, new LoadFailedArgs(youtubeId));
+                foreach (var callback in callbacks)
+                    await callback.OnFailed(new LoadFailedArgs(youtubeId));
             }
             else
             {
-                task = LoadCompleted?.InvokeAsync(this, new LoadCompletedArgs(youtubeId, stream));
+                foreach (var callback in callbacks)
+                    await callback.OnCompleted(new LoadCompletedArgs(youtubeId, stream));
             }
-
-            if (task is not null)
-                await task;
         }
     }
 }

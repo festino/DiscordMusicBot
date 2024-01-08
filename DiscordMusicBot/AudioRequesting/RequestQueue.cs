@@ -35,8 +35,6 @@ namespace DiscordMusicBot.AudioRequesting
             _audioDownloader = audioDownloader;
             _audioStreamer = audioStreamer;
             _audioStreamer.Finished += OnAudioFinishedAsync;
-            _audioDownloader.LoadCompleted += OnLoadCompletedAsync;
-            _audioDownloader.LoadFailed += OnLoadFailedAsync;
         }
 
         public Video[] GetHistory()
@@ -86,10 +84,6 @@ namespace DiscordMusicBot.AudioRequesting
 
         public async Task<List<Video>> ClearAsync()
         {
-            if (_videos.Count >= 1)
-                _audioDownloader.StopDownloading(_videos[0].YoutubeId);
-            if (_videos.Count >= 2)
-                _audioDownloader.StopDownloading(_videos[1].YoutubeId);
             await _audioStreamer.StopAsync();
 
             var videos = _videos;
@@ -100,7 +94,7 @@ namespace DiscordMusicBot.AudioRequesting
             return videos;
         }
 
-        private async Task OnLoadCompletedAsync(object sender, LoadCompletedArgs args)
+        private async Task OnLoadCompletedAsync(LoadCompletedArgs args)
         {
             if (_videos.Count == 0 || _videos[0].YoutubeId != args.YoutubeId)
                 return;
@@ -110,7 +104,7 @@ namespace DiscordMusicBot.AudioRequesting
             await _audioStreamer.JoinAndPlayAsync(video, args.PcmStream, GetRequesterIds);
         }
 
-        private async Task OnLoadFailedAsync(object sender, LoadFailedArgs args)
+        private async Task OnLoadFailedAsync(LoadFailedArgs args)
         {
             _logger.Here().Warning("Load failed {YoutubeId}", args.YoutubeId);
             string message = string.Format(LangConfig.AudioLoadError, args.YoutubeId);
@@ -138,7 +132,6 @@ namespace DiscordMusicBot.AudioRequesting
         {
             Video video = _videos[index];
             _videos.RemoveAt(index);
-            _audioDownloader.StopDownloading(video.YoutubeId);
             if (index == 0)
                 await _audioStreamer.StopAsync();
 
@@ -162,9 +155,9 @@ namespace DiscordMusicBot.AudioRequesting
                 return;
 
             if (index == 0)
-                _audioDownloader.RequestDownload(_videos[0].YoutubeId, true);
+                _audioDownloader.RequestDownload(_videos[0].YoutubeId, OnLoadCompletedAsync, OnLoadFailedAsync);
             if (index <= 1 && _videos.Count >= 2)
-                _audioDownloader.RequestDownload(_videos[1].YoutubeId, false);
+                _audioDownloader.RequestDownload(_videos[1].YoutubeId, (args) => Task.CompletedTask, OnLoadFailedAsync);
         }
 
         private ulong[] GetRequesterIds()
