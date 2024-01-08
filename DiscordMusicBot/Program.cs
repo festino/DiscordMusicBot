@@ -28,7 +28,7 @@ namespace DiscordMusicBot
                     outputTemplate: logTemplate
                 )
                 .WriteTo.File(
-                    Path.Combine(LogsPath, "log-{Date}.txt"),
+                    Path.Combine(LogsPath, "./.log"),
                     rollingInterval: RollingInterval.Day,
                     outputTemplate: logTemplate
                 )
