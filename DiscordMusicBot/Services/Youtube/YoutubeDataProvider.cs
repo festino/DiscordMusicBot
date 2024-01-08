@@ -1,8 +1,11 @@
 ﻿using DiscordMusicBot.Abstractions;
+using DiscordMusicBot.Extensions;
 using DiscordMusicBot.Services.Youtube.Data;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
+using Newtonsoft.Json.Linq;
+using Serilog;
 using System.Xml;
 
 namespace DiscordMusicBot.Services.Youtube
@@ -10,10 +13,14 @@ namespace DiscordMusicBot.Services.Youtube
     public class YoutubeDataProvider : IYoutubeDataProvider
     {
         private const int MaxResults = 50;
+
         private readonly YouTubeService _youtubeService;
 
-        public YoutubeDataProvider(IYoutubeConfig config)
+        private readonly ILogger _logger;
+
+        public YoutubeDataProvider(ILogger logger, IYoutubeConfig config)
         {
+            _logger = logger;
             _youtubeService = new YouTubeService(new BaseClientService.Initializer()
             {
                 ApiKey = config.YoutubeToken,
@@ -96,11 +103,11 @@ namespace DiscordMusicBot.Services.Youtube
             {
                 foreach (var video in videoListResponse.Items)
                 {
-                    if (video.Snippet.LiveBroadcastContent != "none")
+                    VideoHeader? header = GetHeader(video, await GetReasonUnplayable(video.Id));
+                    if (header == null)
                         continue;
 
-                    var header = GetHeader(video);
-                    // TODO cache VideoHeader
+                    // TODO cache VideoHeader if not live
                     foreach (int index in idsIndices[video.Id])
                         result[index] = header;
                 }
@@ -130,12 +137,19 @@ namespace DiscordMusicBot.Services.Youtube
             return result.ToArray();
         }
 
-        private static VideoHeader GetHeader(Video video)
+        private static VideoHeader? GetHeader(Video video, string? reasonUnplayable)
         {
+            if (video.Snippet.LiveBroadcastContent != "none" && video.Snippet.LiveBroadcastContent != "live")
+                return null;
+
+            // bool regionBlocked = video.ContentDetails.RegionRestriction.Blocked.Contains("RU");
             return new VideoHeader(
-                video.Snippet.ChannelTitle,
-                video.Snippet.Title,
-                XmlConvert.ToTimeSpan(video.ContentDetails.Duration)
+                ChannelName: video.Snippet.ChannelTitle,
+                Title: video.Snippet.Title,
+                Duration: XmlConvert.ToTimeSpan(video.ContentDetails.Duration),
+                Live: video.Snippet.LiveBroadcastContent == "live",
+                Copyright: video.ContentDetails.LicensedContent ?? false,
+                ReasonUnplayable: reasonUnplayable
             );
         }
 
@@ -171,6 +185,56 @@ namespace DiscordMusicBot.Services.Youtube
             int endIndex = arg.IndexOf("&", startIndex);
             endIndex = endIndex < 0 ? arg.Length : endIndex;
             return arg[startIndex..endIndex];
+        }
+
+        private async Task<string?> GetReasonUnplayable(string id)
+        {
+            HttpClient httpClient = new();
+            var response = await httpClient.GetAsync($"https://youtu.be/{id}");
+            string responseText = await response.Content.ReadAsStringAsync();
+            int index = responseText.IndexOf("UNPLAYABLE");
+            if (index < 0)
+                return null;
+
+            int jsonStart = responseText.LastIndexOf('{', index);
+            int jsonEnd = index;
+            int bracketsDepth = 1;
+            while (bracketsDepth > 0 && jsonEnd < responseText.Length)
+            {
+                if (responseText[jsonEnd] == '{')
+                    bracketsDepth++;
+                else if (responseText[jsonEnd] == '}')
+                    bracketsDepth--;
+                jsonEnd++;
+            }
+            if (jsonStart < 0 || bracketsDepth > 0)
+            {
+                _logger.Here().Warning("Could not select json for {YoutubeId}", id);
+                return null;
+            }
+
+            JToken? jsonObject = JToken.Parse(responseText[jsonStart..jsonEnd]);
+            if (jsonObject is null)
+            {
+                _logger.Here().Warning("Could not parse json for {YoutubeId}", id);
+                return null;
+            }
+
+            // "playabilityStatus":{"status":"UNPLAYABLE","reason":"...",
+            // "errorScreen":{"playerErrorMessageRenderer":
+            //     {"subreason":{"runs":[{"text":"..."},{"text":"..."}]},
+            //      "reason":{"simpleText":"..."},...}}}
+            // subreason is optional
+            List<JToken> reasonsTokens = jsonObject.FindTokens("reason");
+            string? reason = reasonsTokens.Count == 0 ? null : reasonsTokens.First().ToString();
+
+            List<JToken> subreasonsTokens = jsonObject.FindTokens("subreason");
+            List<string>? subreasons = subreasonsTokens.Count == 0 ? null : subreasonsTokens.First().GetInnerStrings();
+            string res = reason is null ? "Unknown reason" : reason;
+            if (subreasons is null)
+                return res;
+
+            return res + ": " + string.Join("", subreasons);
         }
     }
 }
