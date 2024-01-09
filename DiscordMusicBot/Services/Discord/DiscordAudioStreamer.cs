@@ -219,14 +219,14 @@ namespace DiscordMusicBot.AudioRequesting
                 }
                 catch (OperationCanceledException e)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        return false;
+
                     // if bot was disconnected cancellationToken will not be set
                     // causing discord.FlushAsync to hang forever
                     wasDisconnected = true;
                     _channelId = null;
                     _audioClient = null;
-
-                    if (cancellationToken.IsCancellationRequested)
-                        return false;
 
                     if (await WasKickedAsync())
                         throw;
