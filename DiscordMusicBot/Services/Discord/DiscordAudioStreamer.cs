@@ -189,6 +189,7 @@ namespace DiscordMusicBot.AudioRequesting
             {
                 while (await TryPlayAsync(_volumeStream, cancellationToken))
                 {
+                    _state = PlaybackState.Reconnecting;
                     await JoinAsync(getRequesterIds, cancellationToken);
                 }
 
@@ -211,30 +212,31 @@ namespace DiscordMusicBot.AudioRequesting
             using (var discord = audioClient.CreatePCMStream(AudioApplication.Mixed))
             {
                 _state = PlaybackState.Playing;
-                bool wasKicked = false;
+                bool wasDisconnected = false;
                 try
                 {
                     await stream.CopyToAsync(discord, cancellationToken);
                 }
                 catch (OperationCanceledException e)
                 {
+                    // if bot was disconnected cancellationToken will not be set
+                    // causing discord.FlushAsync to hang forever
+                    wasDisconnected = true;
+                    _channelId = null;
+                    _audioClient = null;
+
                     if (cancellationToken.IsCancellationRequested)
                         return false;
 
-                    // if bot was kicked cancellationToken will not be set
-                    // causing discord.FlushAsync to hang forever
                     if (await WasKickedAsync())
-                    {
-                        wasKicked = true;
                         throw;
-                    }
 
                     _logger.Here().Warning("Inner task was cancelled! Reconnecting voice channel...\n{Exception}", e);
                     return true;
                 }
                 finally
                 {
-                    if (!wasKicked && !cancellationToken.IsCancellationRequested)
+                    if (!wasDisconnected && !cancellationToken.IsCancellationRequested)
                         await discord.FlushAsync(cancellationToken);
                 }
             }
@@ -299,8 +301,13 @@ namespace DiscordMusicBot.AudioRequesting
 
         private async Task JoinAsync(Func<ulong[]> getRequesterIds, CancellationToken cancellationToken)
         {
-            if (_state != PlaybackState.ReadyToLeave && _state != PlaybackState.NoStream)
+            if (_state != PlaybackState.ReadyToLeave
+                && _state != PlaybackState.NoStream
+                && _state != PlaybackState.Reconnecting)
+            {
+                _logger.Here().Error("Could not join in state {State}", _state);
                 return;
+            }
 
             ulong channelId = _channelId is null ? 0 : (ulong)_channelId;
             if (GetChannels(getRequesterIds()).Select(t => t.Item1.Id).Contains(channelId))
