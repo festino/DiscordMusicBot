@@ -332,7 +332,6 @@ namespace DiscordMusicBot.AudioRequesting
                 return null;
 
             (IVoiceChannel voiceChannel, IGuildUser voiceUser) = channelsInfo[0];
-            _logger.Here().Information("{c} {r}", voiceChannel.Name, voiceUser.Username);
             _audioClient = await voiceChannel.ConnectAsync(true, false);
             if (_audioClient is null)
                 return null;
