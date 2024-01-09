@@ -11,7 +11,7 @@ using static DiscordMusicBot.Abstractions.IAudioStreamer;
 
 namespace DiscordMusicBot.AudioRequesting
 {
-    public class AudioStreamer : IAudioStreamer
+    public class DiscordAudioStreamer : IAudioStreamer
     {
         private readonly string OpusFilepath = "opus.dll";
         private readonly string SodiumFilepath = "libsodium.dll";
@@ -50,7 +50,7 @@ namespace DiscordMusicBot.AudioRequesting
             set => _guildId = value;
         }
 
-        public AudioStreamer(ILogger logger, DiscordSocketClient client, IFloatingMessage floatingMessage)
+        public DiscordAudioStreamer(ILogger logger, DiscordSocketClient client, IFloatingMessage floatingMessage)
         {
             _logger = logger;
             _client = client;

@@ -73,7 +73,7 @@ namespace DiscordMusicBot
             services.AddScoped<IMessageSender, DiscordMessageSender>();
             services.AddScoped<ISuggestCleaner, SuggestCleaner>();
             services.AddScoped<IFloatingMessage, FloatingMessage>();
-            services.AddScoped<IAudioStreamer, AudioStreamer>();
+            services.AddScoped<IAudioStreamer, DiscordAudioStreamer>();
             services.AddScoped<RequestQueue>();
 
             ServiceProvider serviceProvider = services.BuildServiceProvider();
