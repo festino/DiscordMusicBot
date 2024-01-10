@@ -19,9 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Abstractions\DiscordMusicBot.Abstractions.csproj" />
-    <ProjectReference Include="..\Discord\DiscordMusicBot.Discord.csproj" />
-    <ProjectReference Include="..\Youtube\DiscordMusicBot.Youtube.csproj" />
+    <ProjectReference Include="..\DiscordMusicBot.Abstractions\DiscordMusicBot.Abstractions.csproj" />
+    <ProjectReference Include="..\DiscordMusicBot.Discord\DiscordMusicBot.Discord.csproj" />
+    <ProjectReference Include="..\DiscordMusicBot.Youtube\DiscordMusicBot.Youtube.csproj" />
   </ItemGroup>
 
 </Project>

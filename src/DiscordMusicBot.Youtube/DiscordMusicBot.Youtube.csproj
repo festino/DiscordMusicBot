@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Abstractions\DiscordMusicBot.Abstractions.csproj" />
+    <ProjectReference Include="..\DiscordMusicBot.Abstractions\DiscordMusicBot.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

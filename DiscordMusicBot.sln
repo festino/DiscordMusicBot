@@ -5,15 +5,17 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordMusicBot", "src\DiscordMusicBot\DiscordMusicBot.csproj", "{543F3232-392A-4BCB-A26F-0ACC067FAB51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMusicBot.Abstractions", "src\DiscordMusicBot.Abstractions\DiscordMusicBot.Abstractions.csproj", "{4A267AF6-1DE7-4A55-8DE1-F04FC24CDD71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordMusicBot.Abstractions", "src\DiscordMusicBot.Abstractions\DiscordMusicBot.Abstractions.csproj", "{4A267AF6-1DE7-4A55-8DE1-F04FC24CDD71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMusicBot.Discord", "src\DiscordMusicBot.Discord\DiscordMusicBot.Discord.csproj", "{5079808A-2EFE-4DF0-8B6D-76E6ECC15C9C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordMusicBot.Discord", "src\DiscordMusicBot.Discord\DiscordMusicBot.Discord.csproj", "{5079808A-2EFE-4DF0-8B6D-76E6ECC15C9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMusicBot.Youtube", "src\DiscordMusicBot.Youtube\DiscordMusicBot.Youtube.csproj", "{2F8810AD-8B58-4C62-86A0-EA120DC80C54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordMusicBot.Youtube", "src\DiscordMusicBot.Youtube\DiscordMusicBot.Youtube.csproj", "{2F8810AD-8B58-4C62-86A0-EA120DC80C54}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3FCC1519-9A42-4806-9503-12D9B45D41DD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{9844533E-82B1-49C2-8939-19A52E06C395}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMusicBot.Tests", "test\DiscordMusicBot.Tests\DiscordMusicBot.Tests.csproj", "{297748B4-5D7B-440D-B8D9-613835A2A6B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +39,10 @@ Global
 		{2F8810AD-8B58-4C62-86A0-EA120DC80C54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F8810AD-8B58-4C62-86A0-EA120DC80C54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F8810AD-8B58-4C62-86A0-EA120DC80C54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{297748B4-5D7B-440D-B8D9-613835A2A6B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{297748B4-5D7B-440D-B8D9-613835A2A6B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{297748B4-5D7B-440D-B8D9-613835A2A6B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{297748B4-5D7B-440D-B8D9-613835A2A6B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -46,6 +52,7 @@ Global
 		{4A267AF6-1DE7-4A55-8DE1-F04FC24CDD71} = {3FCC1519-9A42-4806-9503-12D9B45D41DD}
 		{5079808A-2EFE-4DF0-8B6D-76E6ECC15C9C} = {3FCC1519-9A42-4806-9503-12D9B45D41DD}
 		{2F8810AD-8B58-4C62-86A0-EA120DC80C54} = {3FCC1519-9A42-4806-9503-12D9B45D41DD}
+		{297748B4-5D7B-440D-B8D9-613835A2A6B7} = {9844533E-82B1-49C2-8939-19A52E06C395}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {52DBCA3A-477E-4E5C-9904-0A07B3664EBE}
