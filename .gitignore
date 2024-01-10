@@ -1,4 +1,10 @@
 
 .vs/*
-DiscordMusicBot/bin/*
-DiscordMusicBot/obj/*
+src/DiscordMusicBot/bin/*
+src/DiscordMusicBot/obj/*
+src/DiscordMusicBot.Abstractions/bin/*
+src/DiscordMusicBot.Abstractions/obj/*
+src/DiscordMusicBot.Discord/bin/*
+src/DiscordMusicBot.Discord/obj/*
+src/DiscordMusicBot.Youtube/bin/*
+src/DiscordMusicBot.Youtube/obj/*
