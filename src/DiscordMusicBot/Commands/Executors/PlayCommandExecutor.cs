@@ -44,9 +44,7 @@ namespace DiscordMusicBot.Commands.Executors
 
         private async Task SuggestSearch(string query, DiscordMessageInfo messageInfo)
         {
-            Tuple<string, VideoHeader>[] options = await _youtubeDataProvider.Search(query);
-            var topOptions = options
-                .Take(SearchResultCount);
+            Tuple<string, VideoHeader>[] topOptions = await _youtubeDataProvider.Search(query, SearchResultCount);
             SuggestOption[] suggestOptions = topOptions
                 .Select(t => new SuggestOption(MessageFormatUtils.FormatLabel(t.Item2), $"play https://youtu.be/{t.Item1}"))
                 .ToArray();

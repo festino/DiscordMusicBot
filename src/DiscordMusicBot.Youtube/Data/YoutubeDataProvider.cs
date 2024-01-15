@@ -30,7 +30,7 @@ namespace DiscordMusicBot.Youtube.Data
             });
         }
 
-        public async Task<Tuple<string, VideoHeader>[]> Search(string query)
+        public async Task<Tuple<string, VideoHeader>[]> Search(string query, int maxCount)
         {
             var searchListRequest = _youtubeService.Search.List("snippet");
             searchListRequest.Q = query;
@@ -46,14 +46,16 @@ namespace DiscordMusicBot.Youtube.Data
 
                 videoIds.Add(searchResult.Id.VideoId);
             }
-            VideoHeader?[] videos = await GetHeaders(videoIds.ToArray());
+            VideoHeader?[] videos = await GetHeaders(videoIds.ToArray(), false);
 
             List<Tuple<string, VideoHeader>> result = new();
-            for (int i = 0; i < videos.Length; i++)
+            for (int i = 0; i < videos.Length && result.Count < maxCount; i++)
             {
                 VideoHeader? header = videos[i];
-                if (header is not null)
-                    result.Add(Tuple.Create(videoIds[i], header));
+                if (header is null || await GetReasonUnplayable(videoIds[i]) is not null)
+                    continue;
+
+                result.Add(Tuple.Create(videoIds[i], header));
             }
             return result.ToArray();
         }
@@ -80,6 +82,11 @@ namespace DiscordMusicBot.Youtube.Data
 
         public async Task<VideoHeader?[]> GetHeaders(string[] youtubeIds)
         {
+            return await GetHeaders(youtubeIds, true);
+        }
+
+        private async Task<VideoHeader?[]> GetHeaders(string[] youtubeIds, bool checkPlayability)
+        {
             Dictionary<string, List<int>> idsIndices = new();
             for (int i = 0; i < youtubeIds.Length; i++)
             {
@@ -105,11 +112,12 @@ namespace DiscordMusicBot.Youtube.Data
             {
                 foreach (var video in videoListResponse.Items)
                 {
-                    VideoHeader? header = GetHeader(video, await GetReasonUnplayable(video.Id));
+                    string? reasonUnplayable = checkPlayability ? await GetReasonUnplayable(video.Id) : null;
+                    VideoHeader? header = GetHeader(video, reasonUnplayable);
                     if (header == null)
                         continue;
 
-                    // TODO cache VideoHeader if not live
+                    // TODO cache VideoHeader if checkPlayability and is not live
                     foreach (int index in idsIndices[video.Id])
                         result[index] = header;
                 }
@@ -155,7 +163,7 @@ namespace DiscordMusicBot.Youtube.Data
             );
         }
 
-        private string? TryParseVideoId(string arg)
+        private static string? TryParseVideoId(string arg)
         {
             string? videoId = GetQueryParam(arg, "v");
             if (videoId is not null)
@@ -172,12 +180,12 @@ namespace DiscordMusicBot.Youtube.Data
             return YoutubeUtils.IsValidYoutubeId(videoId) ? videoId : null;
         }
 
-        private string? TryParsePlaylistId(string arg)
+        private static string? TryParsePlaylistId(string arg)
         {
             return GetQueryParam(arg, "list");
         }
 
-        private string? GetQueryParam(string arg, string param)
+        private static string? GetQueryParam(string arg, string param)
         {
             int index = arg.IndexOf(param + "=");
             if (index < 0)
@@ -194,7 +202,7 @@ namespace DiscordMusicBot.Youtube.Data
             HttpClient httpClient = new();
             var response = await httpClient.GetAsync($"https://youtu.be/{id}");
             string responseText = await response.Content.ReadAsStringAsync();
-            int index = responseText.IndexOf("UNPLAYABLE");
+            int index = responseText.LastIndexOf("UNPLAYABLE");
             if (index < 0)
                 return null;
 
