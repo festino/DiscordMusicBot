@@ -70,6 +70,7 @@ namespace DiscordMusicBot
             }
 
             var guildWatcher = services.GetRequiredService<IGuildWatcher>();
+            guildWatcher.GuildId = guildId;
             var bot = services.GetRequiredService<DiscordBot>();
             guildWatcher.OnCommandAsync(this, args).Wait();
             bot.CommandRecieved += guildWatcher.OnCommandAsync;

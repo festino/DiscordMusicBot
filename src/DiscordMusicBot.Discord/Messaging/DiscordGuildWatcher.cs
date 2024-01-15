@@ -8,8 +8,20 @@ namespace DiscordMusicBot.Discord.Messaging
         private const int QueueSize = 10;
         private readonly Queue<ulong> _lastChannels = new();
 
+        private ulong? _guildId = null;
+
+        // dependency injection skill issue
+        public ulong? GuildId
+        {
+            get => _guildId;
+            set => _guildId = value;
+        }
+
         public Task OnCommandAsync(object sender, CommandRecievedArgs args)
         {
+            if (args.MessageInfo.GuildId != GuildId)
+                return Task.CompletedTask;
+
             _lastChannels.Enqueue(args.MessageInfo.ChannelId);
             if (_lastChannels.Count > QueueSize)
             {
