@@ -10,3 +10,4 @@ src/DiscordMusicBot.Youtube/bin/*
 src/DiscordMusicBot.Youtube/obj/*
 *.cache
 /test/DiscordMusicBot.Tests/obj
+/test/DiscordMusicBot.Tests/bin
