@@ -8,3 +8,5 @@ src/DiscordMusicBot.Discord/bin/*
 src/DiscordMusicBot.Discord/obj/*
 src/DiscordMusicBot.Youtube/bin/*
 src/DiscordMusicBot.Youtube/obj/*
+*.cache
+/test/DiscordMusicBot.Tests/obj
